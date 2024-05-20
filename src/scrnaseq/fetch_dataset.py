@@ -78,6 +78,7 @@ def fetch_dataset(
     old = alt_read_object_function(single_cell_load_object)
 
     def reset_alt_read_func():
+        print("unregistering????")
         alt_read_object_function(old)
 
     atexit.register(reset_alt_read_func)
@@ -167,6 +168,9 @@ def single_cell_load_object(
     Returns:
         A `SummarizedExperiment` of the object.
     """
+
+    print(path, scrnaseq_realize_assays, scrnaseq_realize_reduced_dims)
+    print("SSSS")
     obj = read_object(
         path,
         metadata=metadata,
@@ -174,6 +178,8 @@ def single_cell_load_object(
         scrnaseq_realize_reduced_dims=scrnaseq_realize_reduced_dims,
         **kwargs,
     )
+
+    print(obj)
 
     if isinstance(obj, SummarizedExperiment):
         if scrnaseq_realize_assays:
