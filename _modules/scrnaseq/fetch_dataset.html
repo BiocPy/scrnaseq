@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+
+<html lang="en" data-content_root="../../">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>scrnaseq.fetch_dataset &#8212; scrnaseq 0.0.1 documentation</title>
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
+    <link rel="stylesheet" type="text/css" href="../../_static/alabaster.css?v=89af775e" />
+    <script src="../../_static/documentation_options.js?v=d45e8c67"></script>
+    <script src="../../_static/doctools.js?v=9a2dae69"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+
+  
+  
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for scrnaseq.fetch_dataset</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">atexit</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">os</span>
+
+<span class="kn">from</span> <span class="nn">delayedarray</span> <span class="kn">import</span> <span class="n">is_sparse</span><span class="p">,</span> <span class="n">to_dense_array</span><span class="p">,</span> <span class="n">to_scipy_sparse_matrix</span>
+<span class="kn">from</span> <span class="nn">dolomite_base</span> <span class="kn">import</span> <span class="n">alt_read_object</span><span class="p">,</span> <span class="n">alt_read_object_function</span><span class="p">,</span> <span class="n">read_object</span>
+<span class="kn">from</span> <span class="nn">gypsum_client</span> <span class="kn">import</span> <span class="n">cache_directory</span><span class="p">,</span> <span class="n">save_file</span><span class="p">,</span> <span class="n">save_version</span>
+<span class="kn">from</span> <span class="nn">singlecellexperiment</span> <span class="kn">import</span> <span class="n">SingleCellExperiment</span>
+<span class="kn">from</span> <span class="nn">summarizedexperiment</span> <span class="kn">import</span> <span class="n">SummarizedExperiment</span>
+
+<span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Jayaram Kancherla&quot;</span>
+<span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Jayaram Kancherla&quot;</span>
+<span class="n">__license__</span> <span class="o">=</span> <span class="s2">&quot;MIT&quot;</span>
+
+
+<div class="viewcode-block" id="fetch_dataset">
+<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.fetch_dataset.fetch_dataset">[docs]</a>
+<span class="k">def</span> <span class="nf">fetch_dataset</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">package</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;scRNAseq&quot;</span><span class="p">,</span>
+    <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">cache_directory</span><span class="p">(),</span>
+    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">realize_assays</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">realize_reduced_dims</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SummarizedExperiment</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch a dataset from the gypsum backend.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name:</span>
+<span class="sd">            Name of the dataset.</span>
+
+<span class="sd">        version:</span>
+<span class="sd">            Version of the dataset.</span>
+
+<span class="sd">        path:</span>
+<span class="sd">            Path to a subdataset, if name contains multiple datasets.</span>
+<span class="sd">            Defaults to None.</span>
+
+<span class="sd">        package:</span>
+<span class="sd">            Name of the package.</span>
+<span class="sd">            Defaults to &quot;scRNAseq&quot;.</span>
+
+<span class="sd">        cache_dir:</span>
+<span class="sd">            Path to cache directory.</span>
+
+<span class="sd">        overwrite:</span>
+<span class="sd">            Whether to overwrite existing files.</span>
+<span class="sd">            Defaults to False.</span>
+
+<span class="sd">        realize_assays:</span>
+<span class="sd">            Whether to realize assays into memory.</span>
+<span class="sd">            Defaults to False.</span>
+
+<span class="sd">        realize_reduced_dims:</span>
+<span class="sd">            Whether to realize reduced dimensions into memory.</span>
+<span class="sd">            Defaults to True.</span>
+
+<span class="sd">        **kwargs:</span>
+<span class="sd">            Further arguments to pass to</span>
+<span class="sd">            :py:func:`~dolomite_base.read_object.read_object`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The dataset as a</span>
+<span class="sd">        :py:class:`~summarizedexperiment.SummarizedExperiment.SummarizedExperiment`</span>
+<span class="sd">        or one of its subclasses.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">cache_directory</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">)</span>
+
+    <span class="n">version_path</span> <span class="o">=</span> <span class="n">save_version</span><span class="p">(</span>
+        <span class="n">package</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span>
+    <span class="p">)</span>
+    <span class="n">obj_path</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">version_path</span> <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">version_path</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
+    <span class="p">)</span>
+
+    <span class="n">old</span> <span class="o">=</span> <span class="n">alt_read_object_function</span><span class="p">(</span><span class="n">single_cell_load_object</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">reset_alt_read_func</span><span class="p">():</span>
+        <span class="n">alt_read_object_function</span><span class="p">(</span><span class="n">old</span><span class="p">)</span>
+
+    <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">reset_alt_read_func</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">alt_read_object</span><span class="p">(</span>
+        <span class="n">obj_path</span><span class="p">,</span>
+        <span class="n">scrnaseq_realize_assays</span><span class="o">=</span><span class="n">realize_assays</span><span class="p">,</span>
+        <span class="n">scrnaseq_realize_reduced_dims</span><span class="o">=</span><span class="n">realize_reduced_dims</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="fetch_metadata">
+<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.fetch_dataset.fetch_metadata">[docs]</a>
+<span class="k">def</span> <span class="nf">fetch_metadata</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">package</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;scRNAseq&quot;</span><span class="p">,</span>
+    <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">cache_directory</span><span class="p">(),</span>
+    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch metadata for a dataset from the gypsum backend.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name:</span>
+<span class="sd">            Name of the dataset.</span>
+
+<span class="sd">        version:</span>
+<span class="sd">            Version of the dataset.</span>
+
+<span class="sd">        path:</span>
+<span class="sd">            Path to a subdataset, if name contains multiple datasets.</span>
+<span class="sd">            Defaults to None.</span>
+
+<span class="sd">        package:</span>
+<span class="sd">            Name of the package.</span>
+<span class="sd">            Defaults to &quot;scRNAseq&quot;.</span>
+
+<span class="sd">        cache:</span>
+<span class="sd">            Path to the cache directory.</span>
+
+<span class="sd">        overwrite:</span>
+<span class="sd">            Whether to overwrite existing files.</span>
+<span class="sd">            Defaults to False.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Dictionary containing metadata for the specified dataset.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">remote_path</span> <span class="o">=</span> <span class="s2">&quot;_bioconductor.json&quot;</span> <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">/_bioconductor.json&quot;</span>
+    <span class="n">local_path</span> <span class="o">=</span> <span class="n">save_file</span><span class="p">(</span>
+        <span class="n">package</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span>
+    <span class="p">)</span>
+
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">metadata</span></div>
+
+
+
+<div class="viewcode-block" id="single_cell_load_object">
+<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.fetch_dataset.single_cell_load_object">[docs]</a>
+<span class="k">def</span> <span class="nf">single_cell_load_object</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">scrnaseq_realize_assays</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">scrnaseq_realize_reduced_dims</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Load a ``SummarizedExperiment`` or ``SingleCellExperiment`` object from a file.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        path:</span>
+<span class="sd">            Path to the dataset.</span>
+
+<span class="sd">        metadata:</span>
+<span class="sd">            Metadata for the dataset.</span>
+<span class="sd">            Defaults to None.</span>
+
+<span class="sd">        scrnaseq_realize_assays:</span>
+<span class="sd">            Whether to realize assays into memory.</span>
+<span class="sd">            Defaults to False.</span>
+
+<span class="sd">        scrnaseq_realize_reduced_dims:</span>
+<span class="sd">            Whether to realize reduced dimensions into memory.</span>
+<span class="sd">            Defaults to True.</span>
+
+<span class="sd">        **kwargs:</span>
+<span class="sd">            Further arguments to pass to</span>
+<span class="sd">            :py:func:`~dolomite_base.read_object.read_object`.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A `SummarizedExperiment` of the object.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">obj</span> <span class="o">=</span> <span class="n">read_object</span><span class="p">(</span>
+        <span class="n">path</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+        <span class="n">scrnaseq_realize_assays</span><span class="o">=</span><span class="n">scrnaseq_realize_assays</span><span class="p">,</span>
+        <span class="n">scrnaseq_realize_reduced_dims</span><span class="o">=</span><span class="n">scrnaseq_realize_reduced_dims</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">SummarizedExperiment</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">scrnaseq_realize_assays</span><span class="p">:</span>
+            <span class="n">_assays</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">y</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">get_assay_names</span><span class="p">():</span>
+                <span class="n">_assays</span><span class="p">[</span><span class="n">y</span><span class="p">]</span> <span class="o">=</span> <span class="n">realize_array</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">assay</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+
+            <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">set_assays</span><span class="p">(</span><span class="n">_assays</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">SingleCellExperiment</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">scrnaseq_realize_reduced_dims</span><span class="p">:</span>
+                <span class="n">_red_dims</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">z</span> <span class="ow">in</span> <span class="n">obj</span><span class="o">.</span><span class="n">get_reduced_dim_names</span><span class="p">():</span>
+                    <span class="n">_red_dims</span><span class="p">[</span><span class="n">z</span><span class="p">]</span> <span class="o">=</span> <span class="n">realize_array</span><span class="p">(</span><span class="n">obj</span><span class="o">.</span><span class="n">reduced_dim</span><span class="p">(</span><span class="n">z</span><span class="p">))</span>
+
+                <span class="n">obj</span> <span class="o">=</span> <span class="n">obj</span><span class="o">.</span><span class="n">set_reduced_dims</span><span class="p">(</span><span class="n">_red_dims</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">obj</span></div>
+
+
+
+<div class="viewcode-block" id="realize_array">
+<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.fetch_dataset.realize_array">[docs]</a>
+<span class="k">def</span> <span class="nf">realize_array</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Realize a `ReloadedArray` into a dense array or sparse matrix.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        x:</span>
+<span class="sd">            `ReloadedArray` object.</span>
+
+<span class="sd">    Returns:</span>
+
+<span class="sd">        Realized array or matrix.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">dolomite_matrix</span> <span class="kn">import</span> <span class="n">ReloadedArray</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ReloadedArray</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">is_sparse</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">to_scipy_sparse_matrix</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s2">&quot;csr&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">x</span> <span class="o">=</span> <span class="n">to_dense_array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">x</span></div>
+
+</pre></div>
+
+          </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="../../index.html">scrnaseq</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../readme.html">Overview</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contributions &amp; Help</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../authors.html">Authors</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changelog.html">Changelog</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api/modules.html">Module Reference</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<search id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</search>
+<script>document.getElementById('searchbox').style.display = "block"</script>
+
+
+
+
+
+
+
+
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &#169;2024, Jayaram Kancherla.
+      
+      |
+      Powered by <a href="https://www.sphinx-doc.org/">Sphinx 7.3.7</a>
+      &amp; <a href="https://alabaster.readthedocs.io">Alabaster 0.7.16</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

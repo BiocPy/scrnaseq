@@ -1,0 +1,7 @@
+scrnaseq
+========
+
+.. toctree::
+   :maxdepth: 4
+
+   scrnaseq

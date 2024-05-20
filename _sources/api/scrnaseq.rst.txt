@@ -1,0 +1,21 @@
+scrnaseq package
+================
+
+Submodules
+----------
+
+scrnaseq.fetch\_dataset module
+------------------------------
+
+.. automodule:: scrnaseq.fetch_dataset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: scrnaseq
+   :members:
+   :undoc-members:
+   :show-inheritance:
