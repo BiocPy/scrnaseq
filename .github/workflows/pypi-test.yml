@@ -26,10 +26,13 @@ jobs:
       #   run: sudo apt install -y sqlite3
 
       # build SQLite from source, because I need 3.35<=
-      - run: |
+      - name: Download SQLite3
+        run: |
           wget https://www.sqlite.org/2024/sqlite-autoconf-3450300.tar.gz
           tar -xvf sqlite-autoconf-3450300.tar.gz
-      - run: |
+
+      - name: Install SQLite3
+        run: |
           ./configure
           make
           sudo make install
