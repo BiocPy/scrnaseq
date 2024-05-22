@@ -12,17 +12,17 @@ __license__ = "MIT"
 
 
 def test_fetch_dataset():
-    # sce = fetch_dataset("zeisel-brain-2015", "2023-12-14")
-    # assert isinstance(sce, SingleCellExperiment)
+    sce = fetch_dataset("zeisel-brain-2015", "2023-12-14")
+    assert isinstance(sce, SingleCellExperiment)
 
-    # # Correctly creates ReloadedMatrix objects.
-    # ass = sce.get_assays()
-    # assert all(isinstance(a, ReloadedArray) for _, a in ass.items())
-    # assert all(is_sparse(a) for _, a in ass.items())
+    # Correctly creates ReloadedMatrix objects.
+    ass = sce.get_assays()
+    assert all(isinstance(a, ReloadedArray) for _, a in ass.items())
+    assert all(is_sparse(a) for _, a in ass.items())
 
-    # ass_0 = ass["counts"]
-    # assert "zeisel-brain-2015" in ass_0.seed.path
-    # assert "2023-12-14" in ass_0.seed.path
+    ass_0 = ass["counts"]
+    assert "zeisel-brain-2015" in ass_0.seed.path
+    assert "2023-12-14" in ass_0.seed.path
 
     # Works with realization options.
     sce = fetch_dataset("zeisel-brain-2015", "2023-12-14", realize_assays=True)
@@ -31,9 +31,7 @@ def test_fetch_dataset():
 
     alt_exps = sce.get_alternative_experiments()
     for altname, alt in alt_exps.items():
-        print(altname, alt)
         alt_exp_ass = alt.get_assays()
-        print(type(alt_exp_ass["counts"]))
         assert all(isinstance(a, (np.ndarray)) for _, a in alt_exp_ass.items())
 
 
