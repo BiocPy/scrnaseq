@@ -49,47 +49,68 @@ def list_datasets(
     conn = sqlite3.connect(db_path, check_same_thread=False)
 
     stmt = "SELECT json_extract(metadata, '$') AS meta, versions.asset AS asset, versions.version AS version, path"
+    key_names = ["meta", "asset", "version", "path"]
     if latest is not True:
         stmt = f"{stmt} versions.latest AS latest"
+        key_names.append("latest")
 
     stmt = f"{stmt} FROM paths LEFT JOIN versions ON paths.vid = versions.vid WHERE versions.project = 'scRNAseq'"
     if latest is True:
         stmt = f"{stmt} AND versions.latest = 1"
 
-    results = pd.read_sql_query(stmt, conn)
+    _qresults = conn.execute(stmt).fetchall()
+    results = _format_query_results(_qresults, key_names)
     conn.close()
 
     return _sanitize_query_to_output(results, latest)
 
 
-def _sanitize_query_to_output(results, latest, meta_name="meta"):
-    results["path"] = results["path"].apply(
-        lambda p: None if "/" not in p else p.rsplit("/", 1)[0]
-    )
+def _format_query_results(results: list, key_names: list):
+    """Format the results from sqlite as a pandas dataframe
+
+    Key names must be in the exact same order as the query.
+    """
+    _out = {}
+    for k in key_names:
+        _out[k] = []
+
+    for r in results:
+        for idx, k in enumerate(key_names):
+            _out[k].append(r[idx])
+
+    return _out
+
+
+def _sanitize_query_to_output(results: list, latest: bool, meta_name: str = "meta"):
+    _all_paths = [
+        None if "/" not in p else p.rsplit("/", 1)[0] for p in results["path"]
+    ]
+
     df = pd.DataFrame(
         {
             "name": results["asset"],
             "version": results["version"],
-            "path": results["path"],
+            "path": _all_paths,
         }
     )
     if not latest:
-        df["latest"] = results["latest"] == 1
+        _all_latest = [s == 1 for s in results["latest"]]
+        df["latest"] = _all_latest
 
-    all_meta = results[meta_name].apply(json.loads)
+    _all_metas = [json.loads(s) for s in results[meta_name]]
 
     df["object"] = _extract_atomic_from_json(
-        all_meta, lambda x: x.get("applications", {}).get("takane", {}).get("type")
+        _all_metas, lambda x: x.get("applications", {}).get("takane", {}).get("type")
     )
-    df["title"] = _extract_atomic_from_json(all_meta, lambda x: x.get("title"))
-    df["description"] = _extract_atomic_from_json(all_meta, lambda x: x.get("title"))
+    df["title"] = _extract_atomic_from_json(_all_metas, lambda x: x.get("title"))
+    df["description"] = _extract_atomic_from_json(_all_metas, lambda x: x.get("title"))
     df["taxonomy_id"] = _extract_charlist_from_json(
-        all_meta, lambda x: x.get("taxonomy_id")
+        _all_metas, lambda x: x.get("taxonomy_id")
     )
-    df["genome"] = _extract_charlist_from_json(all_meta, lambda x: x.get("genome"))
+    df["genome"] = _extract_charlist_from_json(_all_metas, lambda x: x.get("genome"))
 
     df["rows"] = _extract_atomic_from_json(
-        all_meta,
+        _all_metas,
         lambda x: x.get("applications", {})
         .get("takane", {})
         .get("summarized_experiment", {})
@@ -97,7 +118,7 @@ def _sanitize_query_to_output(results, latest, meta_name="meta"):
     )
 
     df["columns"] = _extract_atomic_from_json(
-        all_meta,
+        _all_metas,
         lambda x: x.get("applications", {})
         .get("takane", {})
         .get("summarized_experiment", {})
@@ -105,28 +126,28 @@ def _sanitize_query_to_output(results, latest, meta_name="meta"):
     )
 
     df["assays"] = _extract_charlist_from_json(
-        all_meta,
+        _all_metas,
         lambda x: x.get("applications", {})
         .get("takane", {})
         .get("summarized_experiment", {})
         .get("assays"),
     )
     df["column_annotations"] = _extract_charlist_from_json(
-        all_meta,
+        _all_metas,
         lambda x: x.get("applications", {})
         .get("takane", {})
         .get("summarized_experiment", {})
         .get("column_annotations"),
     )
     df["reduced_dimensions"] = _extract_charlist_from_json(
-        all_meta,
+        _all_metas,
         lambda x: x.get("applications", {})
         .get("takane", {})
         .get("single_cell_experiment", {})
         .get("reduced_dimensions"),
     )
     df["alternative_experiments"] = _extract_charlist_from_json(
-        all_meta,
+        _all_metas,
         lambda x: x.get("applications", {})
         .get("takane", {})
         .get("single_cell_experiment", {})
@@ -134,17 +155,17 @@ def _sanitize_query_to_output(results, latest, meta_name="meta"):
     )
 
     df["bioconductor_version"] = _extract_atomic_from_json(
-        all_meta, lambda x: x.get("bioconductor_version")
+        _all_metas, lambda x: x.get("bioconductor_version")
     )
     df["maintainer_name"] = _extract_atomic_from_json(
-        all_meta, lambda x: x.get("maintainer_name")
+        _all_metas, lambda x: x.get("maintainer_name")
     )
     df["maintainer_email"] = _extract_atomic_from_json(
-        all_meta, lambda x: x.get("maintainer_email")
+        _all_metas, lambda x: x.get("maintainer_email")
     )
 
     sources = []
-    for meta in all_meta:
+    for meta in _all_metas:
         cursources = meta.get("sources")
         if cursources is None:
             sources.append(pd.DataFrame(columns=["provider", "id", "version"]))
