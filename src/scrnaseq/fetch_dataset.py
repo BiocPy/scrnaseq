@@ -2,11 +2,11 @@ import atexit
 import json
 import os
 
-from delayedarray import is_sparse, to_dense_array, to_scipy_sparse_matrix
-from dolomite_base import alt_read_object, alt_read_object_function, read_object
+from dolomite_base import alt_read_object, alt_read_object_function
 from gypsum_client import cache_directory, save_file, save_version
-from singlecellexperiment import SingleCellExperiment
 from summarizedexperiment import SummarizedExperiment
+
+from .utils import single_cell_load_object
 
 __author__ = "Jayaram Kancherla"
 __copyright__ = "Jayaram Kancherla"
@@ -24,7 +24,24 @@ def fetch_dataset(
     realize_reduced_dims: bool = True,
     **kwargs,
 ) -> SummarizedExperiment:
-    """Fetch a dataset from the gypsum backend.
+    """Fetch a single-cell dataset from the gypsum backend.
+
+    See Also:
+        `metadata index <https://github.com/ArtifactDB/bioconductor-metadata-index>`_,
+        on the expected schema for the metadata.
+
+        :py:func:`~scrnaseq.save_dataset.save_dataset` and
+        :py:func:`~gypsum_client.upload_file_operations.upload_directory`,
+        to save and upload a dataset.
+
+        :py:func:`~scrnaseq.survey_datasets.survey_datasets` and :py:func:`~scrnaseq.list_versions.list_versions`,
+        to get possible values for `name` and `version`.
+
+    Example:
+
+        .. code-block:: python
+
+            sce = fetch_dataset("zeisel-brain-2015", "2023-12-14")
 
     Args:
         name:
@@ -99,6 +116,16 @@ def fetch_metadata(
 ):
     """Fetch metadata for a dataset from the gypsum backend.
 
+    See Also:
+        :py:func:`~.fetch_dataset`,
+        to fetch a dataset.
+
+    Example:
+
+    .. code-block:: python
+
+        meta = fetch_metadata("zeisel-brain-2015", "2023-12-14")
+
     Args:
         name:
             Name of the dataset.
@@ -133,85 +160,3 @@ def fetch_metadata(
         metadata = json.load(f)
 
     return metadata
-
-
-def single_cell_load_object(
-    path: str,
-    metadata: dict = None,
-    scrnaseq_realize_assays: bool = False,
-    scrnaseq_realize_reduced_dims: bool = True,
-    **kwargs,
-):
-    """Load a ``SummarizedExperiment`` or ``SingleCellExperiment`` object from a file.
-
-    Args:
-        path:
-            Path to the dataset.
-
-        metadata:
-            Metadata for the dataset.
-            Defaults to None.
-
-        scrnaseq_realize_assays:
-            Whether to realize assays into memory.
-            Defaults to False.
-
-        scrnaseq_realize_reduced_dims:
-            Whether to realize reduced dimensions into memory.
-            Defaults to True.
-
-        **kwargs:
-            Further arguments to pass to
-            :py:func:`~dolomite_base.read_object.read_object`.
-
-    Returns:
-        A `SummarizedExperiment` of the object.
-    """
-    obj = read_object(
-        path,
-        metadata=metadata,
-        scrnaseq_realize_assays=scrnaseq_realize_assays,
-        scrnaseq_realize_reduced_dims=scrnaseq_realize_reduced_dims,
-        **kwargs,
-    )
-
-    if isinstance(obj, SummarizedExperiment):
-        if scrnaseq_realize_assays:
-            _assays = {}
-            for y in obj.get_assay_names():
-                _assays[y] = realize_array(obj.assay(y))
-
-            obj = obj.set_assays(_assays)
-
-        if isinstance(obj, SingleCellExperiment):
-            if scrnaseq_realize_reduced_dims:
-                _red_dims = {}
-                for z in obj.get_reduced_dim_names():
-                    _red_dims[z] = realize_array(obj.reduced_dim(z))
-
-                obj = obj.set_reduced_dims(_red_dims)
-
-    return obj
-
-
-def realize_array(x):
-    """
-    Realize a `ReloadedArray` into a dense array or sparse matrix.
-
-    Args:
-        x:
-            `ReloadedArray` object.
-
-    Returns:
-
-        Realized array or matrix.
-    """
-    from dolomite_matrix import ReloadedArray
-
-    if isinstance(x, ReloadedArray):
-        if is_sparse(x):
-            x = to_scipy_sparse_matrix(x, "csr")
-        else:
-            x = to_dense_array(x)
-
-    return x

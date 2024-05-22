@@ -16,3 +16,6 @@ finally:
     del version, PackageNotFoundError
 
 from .fetch_dataset import fetch_dataset, fetch_metadata
+from .list_datasets import list_datasets
+from .list_versions import fetch_latest_version, list_versions
+from .save_dataset import save_dataset
