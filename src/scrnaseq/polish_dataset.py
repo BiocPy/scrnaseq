@@ -1,6 +1,8 @@
 from typing import Type
+from warnings import warn
 
 import numpy as np
+from delayedarray import DelayedArray
 from scipy import sparse as sp
 from singlecellexperiment import SingleCellExperiment
 from summarizedexperiment import SummarizedExperiment
@@ -76,28 +78,41 @@ def _polish_dataset(
     forbid_nested_altexp: bool,
     level: int = 0,
 ):
+    new_assays = {}
     for asyname, asy in x.assays.items():
-        if reformat_assay_by_density is not None:
-            density = np.mean(asy != 0 | np.isnan(asy))
-            if density < reformat_assay_by_density:
-                if not sp.issparse(asy):
-                    asy = sp.csr_matrix(asy)
-            else:
-                if sp.issparse(asy):
-                    asy = asy.toarray()
+        if not (isinstance(asy, DelayedArray) or issubclass(type(x), DelayedArray)):
+            if reformat_assay_by_density is not None:
+                density = min(np.mean(asy != 0), np.mean(asy != np.nan))
+                if density < reformat_assay_by_density:
+                    if not sp.issparse(asy):
+                        asy = sp.csr_matrix(asy)
+                else:
+                    if sp.issparse(asy):
+                        asy = asy.toarray()
 
-        if attempt_integer_conversion:
-            if asy.dtype == np.float and not np.any(asy % 1 != 0):
-                asy = asy.astype(np.int)
+            if attempt_integer_conversion:
+                if asy.dtype == np.float_:
+                    _cast = False
+                    if sp.issparse(asy):
+                        if not np.any(asy.data % 1 != 0):
+                            _cast = True
+                    elif not np.any(asy % 1 != 0):
+                        _cast = True
 
-        x.assays[asyname] = asy
+                    if _cast is True:
+                        asy = asy.astype(np.int_)
+
+        new_assays[asyname] = asy
+
+    x = x.set_assays(new_assays)
 
     if isinstance(x, SingleCellExperiment):
-        for altname, altexp in x.alternative_experiments.items():
-            if len(altexp.get_alternative_experiment_names()) > 0:
-                if forbid_nested_altexp and level > 0:
-                    raise ValueError("Nested alternative experiments are forbidden.")
+        if len(x.get_alternative_experiment_names()) > 0:
+            if forbid_nested_altexp and level > 0:
+                raise ValueError("Nested alternative experiments are forbidden.")
 
+        new_alts = {}
+        for altname, altexp in x.alternative_experiments.items():
             if remove_altexp_coldata:
                 altexp = altexp.set_column_data(None)
 
@@ -110,6 +125,8 @@ def _polish_dataset(
                 level=level + 1,
             )
 
-            x.alternative_experiments[altname] = altexp
+            new_alts[altname] = altexp
+
+        x = x.set_alternative_experiments(new_alts)
 
     return x
