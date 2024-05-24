@@ -80,27 +80,26 @@ def _polish_dataset(
 ):
     new_assays = {}
     for asyname, asy in x.assays.items():
-        if not (isinstance(asy, DelayedArray) or issubclass(type(x), DelayedArray)):
-            if reformat_assay_by_density is not None:
-                density = min(np.mean(asy != 0), np.mean(asy != np.nan))
-                if density < reformat_assay_by_density:
-                    if not sp.issparse(asy):
-                        asy = sp.csr_matrix(asy)
-                else:
-                    if sp.issparse(asy):
-                        asy = asy.toarray()
+        if reformat_assay_by_density is not None:
+            density = min(np.mean(asy != 0), np.mean(asy != np.nan))
+            if density < reformat_assay_by_density:
+                if not sp.issparse(asy):
+                    asy = sp.csr_matrix(asy)
+            else:
+                if sp.issparse(asy):
+                    asy = asy.toarray()
 
-            if attempt_integer_conversion:
-                if asy.dtype == np.float_:
-                    _cast = False
-                    if sp.issparse(asy):
-                        if not np.any(asy.data % 1 != 0):
-                            _cast = True
-                    elif not np.any(asy % 1 != 0):
+        if attempt_integer_conversion:
+            if np.issubdtype(asy.dtype, np.floating):
+                _cast = False
+                if sp.issparse(asy):
+                    if not np.any(asy.data % 1 != 0):
                         _cast = True
+                elif not np.any(asy % 1 != 0):
+                    _cast = True
 
-                    if _cast is True:
-                        asy = asy.astype(np.int_)
+                if _cast is True:
+                    asy = asy.astype(np.int_)
 
         new_assays[asyname] = asy
 

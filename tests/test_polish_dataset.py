@@ -174,4 +174,4 @@ def test_polish_existing_dataset():
     y = polish_dataset(sce)
 
     assert y.shape == sce.shape
-    assert type(y.assays["counts"]) == type(sce.assays["counts"])
+    assert type(y.assays["counts"]) != type(sce.assays["counts"])
