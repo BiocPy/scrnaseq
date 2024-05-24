@@ -18,4 +18,6 @@ finally:
 from .fetch_dataset import fetch_dataset, fetch_metadata
 from .list_datasets import list_datasets
 from .list_versions import fetch_latest_version, list_versions
+from .polish_dataset import polish_dataset
 from .save_dataset import save_dataset
+from .upload_dataset import upload_dataset
