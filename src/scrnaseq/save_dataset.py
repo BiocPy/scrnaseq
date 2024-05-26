@@ -87,15 +87,12 @@ def save_dataset_sce(x: SingleCellExperiment, path: str, metadata: dict):
     if "bioconductor_version" not in metadata:
         metadata["bioconductor_version"] = "3.14"  # current release
 
-    validate_metadata.validate_metadata(metadata, schema)
+    validate_metadata(metadata, schema)
 
     if os.path.exists(path):
         shutil.rmtree(path)
 
-    dl.save_object(
-        x,
-        path,
-    )
+    dl.save_object(x, path, reloaded_array_reuse_mode="symlink")
 
     takane = format_object_metadata(x)
     takane["type"] = dl.read_object_file(path)["type"]
@@ -107,7 +104,7 @@ def save_dataset_sce(x: SingleCellExperiment, path: str, metadata: dict):
 
     # Second validation with the takane metadata.
     contents = json.dumps(metadata, indent=4)
-    validate_metadata.validate_metadata(json.loads(contents), schema=schema)
+    validate_metadata(json.loads(contents), schema=schema)
     with open(os.path.join(path, "_bioconductor.json"), "w") as f:
         f.write(contents)
 
