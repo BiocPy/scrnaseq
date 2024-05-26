@@ -6,9 +6,9 @@ __license__ = "MIT"
 
 
 def upload_dataset(
+    directory: str,
     name: str,
     version: str,
-    directory: str = None,
     package: str = "scRNAseq",
     cache_dir: str = cache_directory(),
     deduplicate: bool = True,
