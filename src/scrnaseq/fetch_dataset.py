@@ -34,7 +34,7 @@ def fetch_dataset(
         :py:func:`~gypsum_client.upload_file_operations.upload_directory`,
         to save and upload a dataset.
 
-        :py:func:`~scrnaseq.survey_datasets.survey_datasets` and :py:func:`~scrnaseq.list_versions.list_versions`,
+        :py:func:`~scrnaseq.list_datasets.list_datasets` and :py:func:`~scrnaseq.list_versions.list_versions`,
         to get possible values for `name` and `version`.
 
     Example:

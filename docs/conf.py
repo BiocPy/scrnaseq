@@ -171,7 +171,7 @@ todo_emit_warnings = True
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "alabaster"
+html_theme = "furo"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -249,6 +249,16 @@ html_static_path = ["_static"]
 # Output file base name for HTML help builder.
 htmlhelp_basename = "scrnaseq-doc"
 
+autodoc_default_options = {
+    # 'members': 'var1, var2',
+    # 'member-order': 'bysource',
+    "special-members": True,
+    "undoc-members": True,
+    "exclude-members": "__weakref__, __dict__, __str__, __module__",
+}
+
+autosummary_generate = True
+autosummary_imported_members = True
 
 # -- Options for LaTeX output ------------------------------------------------
 
@@ -299,6 +309,13 @@ intersphinx_mapping = {
     "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
     "setuptools": ("https://setuptools.pypa.io/en/stable/", None),
     "pyscaffold": ("https://pyscaffold.org/en/stable", None),
+    "biocframe": ("https://biocpy.github.io/BiocFrame", None),
+    "genomicranges": ("https://biocpy.github.io/GenomicRanges", None),
+    "singlecellexperiment": ("https://biocpy.github.io/SingleCellExperiment", None),
+    "summarizedexperiment": ("https://biocpy.github.io/SummarizedExperiment", None),
+    "gypsum_client": ("https://artifactdb.github.io/gypsum-py", None),
+    "delayedarray": ("https://biocpy.github.io/DelayedArray", None),
+    "dolomite_base": ("https://artifactdb.github.io/dolomite-base", None),
 }
 
 print(f"loading configurations for {project} {version} ...", file=sys.stderr)
