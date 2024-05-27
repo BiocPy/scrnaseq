@@ -29,7 +29,8 @@ def save_dataset(x: Any, path, metadata):
 
         metadata:
             Dictionary containing the metadata for this dataset.
-            see the schema returned by :py:func:`~gypsum.fetch_metadata_schema`.
+            see the schema returned by 
+            :py:func:`~gypsum_client.fetch_metadata_schema.fetch_metadata_schema`.
 
             Note that the ``applications.takane`` property will be automatically
             added by this function and does not have to be supplied.
@@ -41,7 +42,7 @@ def save_dataset(x: Any, path, metadata):
         :py:func:`~scrnaseq.polish_dataset.polish_dataset`,
         to polish ``x`` before saving it.
 
-        :py:func:`~gypsum.upload_directory`, to upload the saved contents.
+        :py:func:`~scrnaseq.upload_dataset.upload_dataset`, to upload the saved contents.
 
     Example:
 

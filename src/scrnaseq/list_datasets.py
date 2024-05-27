@@ -38,7 +38,7 @@ def list_datasets(
             Defaults to True.
 
     Returns:
-        A pandas DataFrame where each row corresponds to a dataset.
+        A :py:class:`~pandas.DataFrame` where each row corresponds to a dataset.
         Each row contains title and description for each dataset,
         the number of rows and columns, the organisms and genome builds involved,
         whether the dataset has any pre-computed reduced dimensions, and so on.
