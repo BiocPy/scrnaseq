@@ -59,8 +59,9 @@ def list_datasets(
         stmt = f"{stmt} AND versions.latest = 1"
 
     _qresults = conn.execute(stmt).fetchall()
-    results = _format_query_results(_qresults, key_names)
     conn.close()
+
+    results = _format_query_results(_qresults, key_names)
 
     return _sanitize_query_to_output(results, latest)
 
