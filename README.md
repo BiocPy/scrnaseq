@@ -15,7 +15,7 @@
 
 # scrnaseq
 
-The `scRNAseq` package provides convenient access to several publicly available single-cell datasets in the form of [SingleCellExperiment](https://github.com/biocpy/singlecellexperiment) objects. Users can obtain a `SingleCellExperiment` and transform it into analysis-ready representations for immediate use.
+The `scrnaseq` package provides convenient access to several publicly available single-cell datasets in the form of [SingleCellExperiment](https://github.com/biocpy/singlecellexperiment) objects. Users can obtain a `SingleCellExperiment` and transform it into analysis-ready representations for immediate use.
 
 To enable discovery, each dataset is decorated with metadata such as the study title/abstract, the species, the number of cells, etc. Users can also contribute their own published datasets to enable re-use by the wider Bioconductor/BiocPy community.
 
@@ -23,7 +23,7 @@ To enable discovery, each dataset is decorated with metadata such as the study t
 
 ## Installation
 
-package is published to [PyPI](https://pypi.org/project/scrnaseq/),
+Package is published to [PyPI](https://pypi.org/project/scrnaseq/),
 
 ```shell
 pip install scrnaseq
