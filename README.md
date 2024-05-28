@@ -36,6 +36,14 @@ The `list_datasets()` function will display all available datasets along with th
 ```python
 import scrnaseq
 datasets = scrnaseq.list_datasets()
+print(datasets[["name", "version"]].head(3))
+
+## output
+# |    | name                  | version    |
+# |---:|:----------------------|:-----------|
+# |  0 | romanov-brain-2017    | 2023-12-19 |
+# |  1 | campbell-brain-2017   | 2023-12-14 |
+# |  2 | zhong-prefrontal-2018 | 2023-12-22 |
 ```
 
 This returns a pandas `DataFrame` to easily filter and download datasets of interest.
@@ -44,16 +52,26 @@ Users can also search on the metadata text using the `search_datasets()` functio
 
 ```python
 # Find all datasets involving pancreas.
-res = search_datasets("pancreas")
+res = scrnaseq.search_datasets("pancreas")
 
 # Find all mm10 datasets involving pancreas or neurons.
-res = search_datasets(
+from gypsum_client import define_text_query
+
+res = scrnaseq.search_datasets(
      define_text_query("GRCm38", field="genome")
      & (
           define_text_query("neuro%", partial=True)
           | define_text_query("pancrea%", partial=True)
      )
 )
+print(res[["name", "version"]].head(3))
+
+## output
+# |    | name                    | version    |
+# |---:|:------------------------|:-----------|
+# |  0 | romanov-brain-2017      | 2023-12-19 |
+# |  1 | campbell-brain-2017     | 2023-12-14 |
+# |  2 | fletcher-olfactory-2019 | 2023-12-21 |
 ```
 
 Search results are not guaranteed to be reproducible - more datasets may be added over time, and existing datasets may be updated with new versions. Once a dataset of interest is identified, users should explicitly list the name and version of the dataset in their scripts to ensure reproducibility.
@@ -65,6 +83,21 @@ The `fetch_dataset()` function will download a particular dataset, as `SingleCel
 ```python
 sce = scrnaseq.fetch_dataset("zeisel-brain-2015", "2023-12-14")
 print(sce)
+
+## output
+# class: SingleCellExperiment
+# dimensions: (20006, 3005)
+# assays(1): ['counts']
+# row_data columns(1): ['featureType']
+# row_names(20006): ['Tspan12', 'Tshz1', 'Fnbp1l', ..., 'mt-Rnr2', 'mt-Rnr1', 'mt-Nd4l']
+# column_data columns(9): ['tissue', 'group #', 'total mRNA mol', 'well', 'sex', 'age', 'diameter', 'level1class', 'level2class']
+# column_names(3005): ['1772071015_C02', '1772071017_G12', '1772071017_A05', ..., '1772063068_D01', '1772066098_A12', '1772058148_F03']
+# main_experiment_name: gene
+# reduced_dims(0): []
+# alternative_experiments(2): ['repeat', 'ERCC']
+# row_pairs(0): []
+# column_pairs(0): []
+# metadata(0): 
 ```
 
 For studies that generate multiple datasets, the dataset of interest must be explicitly requested via the `path` argument:
@@ -72,6 +105,21 @@ For studies that generate multiple datasets, the dataset of interest must be exp
 ```python
 sce = scrnaseq.fetch_dataset("baron-pancreas-2016", "2023-12-14", path="human")
 print(sce)
+
+## output
+# class: SingleCellExperiment
+# dimensions: (20125, 8569)
+# assays(1): ['counts']
+# row_data columns(0): []
+# row_names(20125): ['A1BG', 'A1CF', 'A2M', ..., 'ZZEF1', 'ZZZ3', 'pk']
+# column_data columns(2): ['donor', 'label']
+# column_names(8569): ['human1_lib1.final_cell_0001', 'human1_lib1.final_cell_0002', 'human1_lib1.final_cell_0003', ..., 'human4_lib3.final_cell_0699', 'human4_lib3.final_cell_0700', 'human4_lib3.final_cell_0701']
+# main_experiment_name:  
+# reduced_dims(0): []
+# alternative_experiments(0): []
+# row_pairs(0): []
+# column_pairs(0): []
+# metadata(0): 
 ```
 
 By default, array data is loaded as a file-backed `DelayedArray` from the [HDF5Array](https://github.com/BiocPy/HDF5Array) package. Setting `realize_assays=True` and/or `realize_reduced_dims=True` will coerce file-backed arrays to numpy or scipy sparse (csr/csc) objects.
@@ -79,12 +127,31 @@ By default, array data is loaded as a file-backed `DelayedArray` from the [HDF5A
 ```python
 sce = scrnaseq.fetch_dataset("baron-pancreas-2016", "2023-12-14", path="human", realize_assays=True)
 print(sce)
+
+## output
+# class: SingleCellExperiment
+# dimensions: (20125, 8569)
+# assays(1): ['counts']
+# row_data columns(0): []
+# row_names(20125): ['A1BG', 'A1CF', 'A2M', ..., 'ZZEF1', 'ZZZ3', 'pk']
+# column_data columns(2): ['donor', 'label']
+# column_names(8569): ['human1_lib1.final_cell_0001', 'human1_lib1.final_cell_0002', 'human1_lib1.final_cell_0003', ..., 'human4_lib3.final_cell_0699', 'human4_lib3.final_cell_0700', 'human4_lib3.final_cell_0701']
+# main_experiment_name:  
+# reduced_dims(0): []
+# alternative_experiments(0): []
+# row_pairs(0): []
+# column_pairs(0): []
+# metadata(0):
 ```
 
 Users can also fetch the metadata associated with each dataset:
 
 ```python
 meta = scrnaseq.fetch_metadata("zeisel-brain-2015", "2023-12-14")
+print(meta.keys())
+
+## output
+# dict_keys(['title', 'description', 'taxonomy_id', 'genome', 'sources', 'maintainer_name', 'maintainer_email', 'bioconductor_version', 'applications'])
 ```
 
 
