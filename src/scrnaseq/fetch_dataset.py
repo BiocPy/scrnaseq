@@ -83,8 +83,6 @@ def fetch_dataset(
         or one of its subclasses.
     """
 
-    cache_dir = cache_directory(cache_dir)
-
     version_path = save_version(
         package, name, version, cache_dir=cache_dir, overwrite=overwrite
     )
