@@ -1,8 +1,6 @@
 from typing import Type
-from warnings import warn
 
 import numpy as np
-from delayedarray import DelayedArray
 from scipy import sparse as sp
 from singlecellexperiment import SingleCellExperiment
 from summarizedexperiment import SummarizedExperiment

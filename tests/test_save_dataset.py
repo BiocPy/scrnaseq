@@ -82,7 +82,8 @@ def test_save_dataset_anndata():
     assert isinstance(roundtrip.get_assays()["counts"], ReloadedArray)
     assert isinstance(adata.layers["counts"], np.ndarray)
     assert np.array_equal(
-        to_dense_array(roundtrip.get_assays()["counts"]).transpose(), adata.layers["counts"]
+        to_dense_array(roundtrip.get_assays()["counts"]).transpose(),
+        adata.layers["counts"],
     )
 
     # Load and check the metadata

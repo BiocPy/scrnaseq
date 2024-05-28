@@ -94,7 +94,7 @@ def format_object_metadata(x) -> dict:
     """Format object related metadata.
 
     Create object-related metadata to validate against the default
-    schema from 
+    schema from
     :py:func:`~gypsum_client.fetch_metadata_schema.fetch_metadata_schema`.
     This is intended for downstream package developers who are
     auto-generating metadata documents to be validated by

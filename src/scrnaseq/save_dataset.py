@@ -29,7 +29,7 @@ def save_dataset(x: Any, path, metadata):
 
         metadata:
             Dictionary containing the metadata for this dataset.
-            see the schema returned by 
+            see the schema returned by
             :py:func:`~gypsum_client.fetch_metadata_schema.fetch_metadata_schema`.
 
             Note that the ``applications.takane`` property will be automatically

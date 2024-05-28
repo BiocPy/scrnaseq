@@ -97,7 +97,7 @@ print(sce)
 # alternative_experiments(2): ['repeat', 'ERCC']
 # row_pairs(0): []
 # column_pairs(0): []
-# metadata(0): 
+# metadata(0):
 ```
 
 For studies that generate multiple datasets, the dataset of interest must be explicitly requested via the `path` argument:
@@ -114,12 +114,12 @@ print(sce)
 # row_names(20125): ['A1BG', 'A1CF', 'A2M', ..., 'ZZEF1', 'ZZZ3', 'pk']
 # column_data columns(2): ['donor', 'label']
 # column_names(8569): ['human1_lib1.final_cell_0001', 'human1_lib1.final_cell_0002', 'human1_lib1.final_cell_0003', ..., 'human4_lib3.final_cell_0699', 'human4_lib3.final_cell_0700', 'human4_lib3.final_cell_0701']
-# main_experiment_name:  
+# main_experiment_name:
 # reduced_dims(0): []
 # alternative_experiments(0): []
 # row_pairs(0): []
 # column_pairs(0): []
-# metadata(0): 
+# metadata(0):
 ```
 
 By default, array data is loaded as a file-backed `DelayedArray` from the [HDF5Array](https://github.com/BiocPy/HDF5Array) package. Setting `realize_assays=True` and/or `realize_reduced_dims=True` will coerce file-backed arrays to numpy or scipy sparse (csr/csc) objects.
@@ -136,7 +136,7 @@ print(sce)
 # row_names(20125): ['A1BG', 'A1CF', 'A2M', ..., 'ZZEF1', 'ZZZ3', 'pk']
 # column_data columns(2): ['donor', 'label']
 # column_names(8569): ['human1_lib1.final_cell_0001', 'human1_lib1.final_cell_0002', 'human1_lib1.final_cell_0003', ..., 'human4_lib3.final_cell_0699', 'human4_lib3.final_cell_0700', 'human4_lib3.final_cell_0701']
-# main_experiment_name:  
+# main_experiment_name:
 # reduced_dims(0): []
 # alternative_experiments(0): []
 # row_pairs(0): []
@@ -215,12 +215,12 @@ Want to contribute your own dataset to this package? It's easy! Just follow thes
    - An Python file containing the code used to assemble the dataset. This should be added to the [`scripts/`](https://github.com/BiocPy/scRNAseq/tree/master/scripts) directory of this package, in order to provide some record of how the dataset was created.
 
 5. Wait for us to grant temporary upload permissions to your GitHub account.
-   
+
 6. Upload your staging directory to [**gypsum** backend](https://github.com/ArtifactDB/gypsum-worker) with `upload_dataset()`. On the first call to this function, it will automatically prompt you to log into GitHub so that the backend can authenticate you. If you are on a system without browser access (e.g., most computing clusters), a [token](https://github.com/settings/tokens) can be manually supplied via `set_access_token()`.
 
      ```python
      from scrnaseq import upload_dataset
-     
+
      upload_dataset(staging_dir, "my_dataset_name", "my_version")
      ```
 
