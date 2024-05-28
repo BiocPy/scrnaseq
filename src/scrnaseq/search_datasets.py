@@ -1,4 +1,5 @@
 import sqlite3
+from functools import lru_cache
 from typing import Union
 
 import pandas as pd
@@ -17,6 +18,7 @@ __copyright__ = "Jayaram Kancherla"
 __license__ = "MIT"
 
 
+@lru_cache
 def search_datasets(
     query: Union[str, GypsumSearchClause],
     cache_dir: str = cache_directory(),
