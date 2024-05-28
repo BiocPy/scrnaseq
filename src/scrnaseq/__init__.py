@@ -20,4 +20,5 @@ from .list_datasets import list_datasets
 from .list_versions import fetch_latest_version, list_versions
 from .polish_dataset import polish_dataset
 from .save_dataset import save_dataset
+from .search_datasets import search_datasets
 from .upload_dataset import upload_dataset

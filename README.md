@@ -32,6 +32,24 @@ datasets = scrnaseq.list_datasets()
 
 This returns a pandas `DataFrame` to easily filter and download datasets of interest.
 
+Users can also search on the metadata text using the `search_datasets()` function. This accepts both simple text queries as well as more complicated expressions involving boolean operations.
+
+```python
+# Find all datasets involving pancreas.
+res = search_datasets("pancreas")
+
+# Find all mm10 datasets involving pancreas or neurons.
+res = search_datasets(
+     define_text_query("GRCm38", field="genome")
+     & (
+          define_text_query("neuro%", partial=True)
+          | define_text_query("pancrea%", partial=True)
+     )
+)
+```
+
+Search results are not guaranteed to be reproducible - more datasets may be added over time, and existing datasets may be updated with new versions. Once a dataset of interest is identified, users should explicitly list the name and version of the dataset in their scripts to ensure reproducibility.
+
 ## Fetch Datasets
 
 The `fetch_dataset()` function will download a particular dataset, as `SingleCellExperiment`:
@@ -60,6 +78,7 @@ Users can also fetch the metadata associated with each dataset:
 ```python
 meta = scrnaseq.fetch_metadata("zeisel-brain-2015", "2023-12-14")
 ```
+
 
 ## Adding New Datasets
 
