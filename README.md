@@ -21,6 +21,14 @@ To enable discovery, each dataset is decorated with metadata such as the study t
 
 **Also check out the R version of this library [here@scRNAseq](https://bioconductor.org/packages/devel/data/experiment/html/scRNAseq.html) published to Bioconductor.**
 
+## Installation
+
+package is published to [PyPI](https://pypi.org/project/scrnaseq/),
+
+```shell
+pip install scrnaseq
+```
+
 ## Find Datasets
 
 The `list_datasets()` function will display all available datasets along with their metadata. This can be used to discover interesting datasets for further analysis.
