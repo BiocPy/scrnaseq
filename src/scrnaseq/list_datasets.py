@@ -67,7 +67,7 @@ def list_datasets(
 
 
 def _format_query_results(results: list, key_names: list):
-    """Format the results from sqlite as a pandas dataframe
+    """Format the results from sqlite as a pandas dataframe.
 
     Key names must be in the exact same order as the query.
     """

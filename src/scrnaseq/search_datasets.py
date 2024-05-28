@@ -1,12 +1,11 @@
 import sqlite3
+from functools import lru_cache
 from typing import Union
 
 import pandas as pd
 from gypsum_client import cache_directory, fetch_metadata_database
 from gypsum_client.search_metadata import (
     GypsumSearchClause,
-    define_text_query,
-    search_metadata_text,
     search_metadata_text_filter,
 )
 
@@ -17,14 +16,14 @@ __copyright__ = "Jayaram Kancherla"
 __license__ = "MIT"
 
 
+@lru_cache
 def search_datasets(
     query: Union[str, GypsumSearchClause],
     cache_dir: str = cache_directory(),
     overwrite: bool = False,
     latest: bool = True,
 ) -> pd.DataFrame:
-    """Search for datasets of interest based on matching text in the
-    associated metadata.
+    """Search for datasets of interest based on matching text in the associated metadata.
 
     This is a wrapper around
     :py:func:`~gypsum_client.search_metadata.search_metadata_text`.
