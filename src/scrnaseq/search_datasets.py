@@ -38,6 +38,9 @@ def search_datasets(
     `metadata index <https://github.com/ArtifactDB/bioconductor-metadata-index>`_.
 
     See Also:
+        :py:func:`~scrnaseq.list_datasets.list_datasets`, to list all
+        available datasets.
+
         :py:func:`~gypsum_client.search_metadata.search_metadata_text`,
         to search metadata.
 
