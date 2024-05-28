@@ -12,6 +12,62 @@ scrnaseq.fetch\_dataset module
    :undoc-members:
    :show-inheritance:
 
+scrnaseq.list\_datasets module
+------------------------------
+
+.. automodule:: scrnaseq.list_datasets
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+scrnaseq.list\_versions module
+------------------------------
+
+.. automodule:: scrnaseq.list_versions
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+scrnaseq.polish\_dataset module
+-------------------------------
+
+.. automodule:: scrnaseq.polish_dataset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+scrnaseq.save\_dataset module
+-----------------------------
+
+.. automodule:: scrnaseq.save_dataset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+scrnaseq.search\_datasets module
+--------------------------------
+
+.. automodule:: scrnaseq.search_datasets
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+scrnaseq.upload\_dataset module
+-------------------------------
+
+.. automodule:: scrnaseq.upload_dataset
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+scrnaseq.utils module
+---------------------
+
+.. automodule:: scrnaseq.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 

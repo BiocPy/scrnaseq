@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
     <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
-        <title>scrnaseq.fetch_dataset - scrnaseq 0.1.0 documentation</title>
+        <title>scrnaseq.polish_dataset - scrnaseq 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=387cc868" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
@@ -254,175 +254,141 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for scrnaseq.fetch_dataset</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">atexit</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">os</span>
+          <h1>Source code for scrnaseq.polish_dataset</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Type</span>
+<span class="kn">from</span> <span class="nn">warnings</span> <span class="kn">import</span> <span class="n">warn</span>
 
-<span class="kn">from</span> <span class="nn">dolomite_base</span> <span class="kn">import</span> <span class="n">alt_read_object</span><span class="p">,</span> <span class="n">alt_read_object_function</span>
-<span class="kn">from</span> <span class="nn">gypsum_client</span> <span class="kn">import</span> <span class="n">cache_directory</span><span class="p">,</span> <span class="n">save_file</span><span class="p">,</span> <span class="n">save_version</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">delayedarray</span> <span class="kn">import</span> <span class="n">DelayedArray</span>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">sparse</span> <span class="k">as</span> <span class="n">sp</span>
+<span class="kn">from</span> <span class="nn">singlecellexperiment</span> <span class="kn">import</span> <span class="n">SingleCellExperiment</span>
 <span class="kn">from</span> <span class="nn">summarizedexperiment</span> <span class="kn">import</span> <span class="n">SummarizedExperiment</span>
-
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">single_cell_load_object</span>
 
 <span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Jayaram Kancherla&quot;</span>
 <span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Jayaram Kancherla&quot;</span>
 <span class="n">__license__</span> <span class="o">=</span> <span class="s2">&quot;MIT&quot;</span>
 
 
-<div class="viewcode-block" id="fetch_dataset">
-<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.fetch_dataset.fetch_dataset">[docs]</a>
-<span class="k">def</span> <span class="nf">fetch_dataset</span><span class="p">(</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">package</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;scRNAseq&quot;</span><span class="p">,</span>
-    <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">cache_directory</span><span class="p">(),</span>
-    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">realize_assays</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">realize_reduced_dims</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SummarizedExperiment</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch a single-cell dataset from the gypsum backend.</span>
+<div class="viewcode-block" id="polish_dataset">
+<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.polish_dataset.polish_dataset">[docs]</a>
+<span class="k">def</span> <span class="nf">polish_dataset</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">SummarizedExperiment</span><span class="p">],</span>
+    <span class="n">reformat_assay_by_density</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
+    <span class="n">attempt_integer_conversion</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">remove_altexp_coldata</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">forbid_nested_altexp</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">SummarizedExperiment</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optimize dataset for saving.</span>
 
-<span class="sd">    See Also:</span>
-<span class="sd">        `metadata index &lt;https://github.com/ArtifactDB/bioconductor-metadata-index&gt;`_,</span>
-<span class="sd">        on the expected schema for the metadata.</span>
+<span class="sd">    Prepare a</span>
+<span class="sd">    :py:class:`~summarizedexperiment.SummarizedExperiment.SummarizedExperiment` or</span>
+<span class="sd">    :py:class:`~singlecellexperiment.SingleCellExperiment.SingleCellExperiment`</span>
+<span class="sd">    to be saved with :py:func:`scrnaseq.save_dataset.save_dataset`.</span>
 
-<span class="sd">        :py:func:`~scrnaseq.save_dataset.save_dataset` and</span>
-<span class="sd">        :py:func:`~gypsum_client.upload_file_operations.upload_directory`,</span>
-<span class="sd">        to save and upload a dataset.</span>
-
-<span class="sd">        :py:func:`~scrnaseq.list_datasets.list_datasets` and :py:func:`~scrnaseq.list_versions.list_versions`,</span>
-<span class="sd">        to get possible values for `name` and `version`.</span>
-
-<span class="sd">    Example:</span>
-
-<span class="sd">        .. code-block:: python</span>
-
-<span class="sd">            sce = fetch_dataset(&quot;zeisel-brain-2015&quot;, &quot;2023-12-14&quot;)</span>
+<span class="sd">    This performs minor changes to improve storage efficiency, especially</span>
+<span class="sd">    with matrices.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        name:</span>
-<span class="sd">            Name of the dataset.</span>
+<span class="sd">        x:</span>
+<span class="sd">            A :py:class:`~summarizedexperiment.SummarizedExperiment.SummarizedExperiment`</span>
+<span class="sd">            or one of its derivative.</span>
 
-<span class="sd">        version:</span>
-<span class="sd">            Version of the dataset.</span>
+<span class="sd">        reformat_assay_by_density:</span>
+<span class="sd">            Whether to optimize assay formats based on the density of non-zero values.</span>
+<span class="sd">            Assays with densities above this number are converted to ordinary dense</span>
+<span class="sd">            arrays (if they are not already), while those with lower densities are</span>
+<span class="sd">            converted to sparse matrices.</span>
 
-<span class="sd">        path:</span>
-<span class="sd">            Path to a subdataset, if name contains multiple datasets.</span>
-<span class="sd">            Defaults to None.</span>
+<span class="sd">            This can be disabled by setting it to `None`.</span>
 
-<span class="sd">        package:</span>
-<span class="sd">            Name of the package.</span>
-<span class="sd">            Defaults to &quot;scRNAseq&quot;.</span>
+<span class="sd">        attempt_integer_conversion:</span>
+<span class="sd">            Whether to convert double-precision assays containing integer values</span>
+<span class="sd">            to actually have the integer type.</span>
 
-<span class="sd">        cache_dir:</span>
-<span class="sd">            Path to cache directory.</span>
+<span class="sd">            This can improve efficiency of downstream applications by avoiding</span>
+<span class="sd">            the need to operate in double precision.</span>
 
-<span class="sd">        overwrite:</span>
-<span class="sd">            Whether to overwrite existing files.</span>
-<span class="sd">            Defaults to False.</span>
+<span class="sd">        remove_altexp_coldata:</span>
+<span class="sd">            Whether column data for alternative experiments should be removed.</span>
+<span class="sd">            Defaults to `True` as the alternative experiment column data is</span>
+<span class="sd">            usually redundant compared to the main experiment.</span>
 
-<span class="sd">        realize_assays:</span>
-<span class="sd">            Whether to realize assays into memory.</span>
-<span class="sd">            Defaults to False.</span>
-
-<span class="sd">        realize_reduced_dims:</span>
-<span class="sd">            Whether to realize reduced dimensions into memory.</span>
-<span class="sd">            Defaults to True.</span>
-
-<span class="sd">        **kwargs:</span>
-<span class="sd">            Further arguments to pass to</span>
-<span class="sd">            :py:func:`~dolomite_base.read_object.read_object`.</span>
+<span class="sd">        forbid_nested_altexp:</span>
+<span class="sd">            Whether nested alternative experiments (i.e., alternative experiments of</span>
+<span class="sd">            alternative experiments) should be forbidden.</span>
 
 <span class="sd">    Returns:</span>
-<span class="sd">        The dataset as a</span>
-<span class="sd">        :py:class:`~summarizedexperiment.SummarizedExperiment.SummarizedExperiment`</span>
-<span class="sd">        or one of its subclasses.</span>
+<span class="sd">        A modifed object with the same type as ``x``.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">cache_directory</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">)</span>
-
-    <span class="n">version_path</span> <span class="o">=</span> <span class="n">save_version</span><span class="p">(</span>
-        <span class="n">package</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span>
-    <span class="p">)</span>
-    <span class="n">obj_path</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">version_path</span> <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">version_path</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
-    <span class="p">)</span>
-
-    <span class="n">old</span> <span class="o">=</span> <span class="n">alt_read_object_function</span><span class="p">(</span><span class="n">single_cell_load_object</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">reset_alt_read_func</span><span class="p">():</span>
-        <span class="n">alt_read_object_function</span><span class="p">(</span><span class="n">old</span><span class="p">)</span>
-
-    <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">reset_alt_read_func</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">alt_read_object</span><span class="p">(</span>
-        <span class="n">obj_path</span><span class="p">,</span>
-        <span class="n">scrnaseq_realize_assays</span><span class="o">=</span><span class="n">realize_assays</span><span class="p">,</span>
-        <span class="n">scrnaseq_realize_reduced_dims</span><span class="o">=</span><span class="n">realize_reduced_dims</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="k">return</span> <span class="n">_polish_dataset</span><span class="p">(</span>
+        <span class="n">x</span><span class="p">,</span>
+        <span class="n">reformat_assay_by_density</span><span class="p">,</span>
+        <span class="n">attempt_integer_conversion</span><span class="p">,</span>
+        <span class="n">remove_altexp_coldata</span><span class="p">,</span>
+        <span class="n">forbid_nested_altexp</span><span class="p">,</span>
     <span class="p">)</span></div>
 
 
 
-<div class="viewcode-block" id="fetch_metadata">
-<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.fetch_dataset.fetch_metadata">[docs]</a>
-<span class="k">def</span> <span class="nf">fetch_metadata</span><span class="p">(</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">package</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;scRNAseq&quot;</span><span class="p">,</span>
-    <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">cache_directory</span><span class="p">(),</span>
-    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="k">def</span> <span class="nf">_polish_dataset</span><span class="p">(</span>
+    <span class="n">x</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">SummarizedExperiment</span><span class="p">],</span>
+    <span class="n">reformat_assay_by_density</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">attempt_integer_conversion</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">remove_altexp_coldata</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">forbid_nested_altexp</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch metadata for a dataset from the gypsum backend.</span>
+    <span class="n">new_assays</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">asyname</span><span class="p">,</span> <span class="n">asy</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">assays</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">reformat_assay_by_density</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">density</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">asy</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">asy</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">density</span> <span class="o">&lt;</span> <span class="n">reformat_assay_by_density</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">sp</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">asy</span><span class="p">):</span>
+                    <span class="n">asy</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">csr_matrix</span><span class="p">(</span><span class="n">asy</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">sp</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">asy</span><span class="p">):</span>
+                    <span class="n">asy</span> <span class="o">=</span> <span class="n">asy</span><span class="o">.</span><span class="n">toarray</span><span class="p">()</span>
 
-<span class="sd">    See Also:</span>
-<span class="sd">        :py:func:`~.fetch_dataset`,</span>
-<span class="sd">        to fetch a dataset.</span>
+        <span class="k">if</span> <span class="n">attempt_integer_conversion</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">asy</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">floating</span><span class="p">):</span>
+                <span class="n">_cast</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="k">if</span> <span class="n">sp</span><span class="o">.</span><span class="n">issparse</span><span class="p">(</span><span class="n">asy</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">asy</span><span class="o">.</span><span class="n">data</span> <span class="o">%</span> <span class="mi">1</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+                        <span class="n">_cast</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">asy</span> <span class="o">%</span> <span class="mi">1</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">):</span>
+                    <span class="n">_cast</span> <span class="o">=</span> <span class="kc">True</span>
 
-<span class="sd">    Example:</span>
+                <span class="k">if</span> <span class="n">_cast</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+                    <span class="n">asy</span> <span class="o">=</span> <span class="n">asy</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int_</span><span class="p">)</span>
 
-<span class="sd">    .. code-block:: python</span>
+        <span class="n">new_assays</span><span class="p">[</span><span class="n">asyname</span><span class="p">]</span> <span class="o">=</span> <span class="n">asy</span>
 
-<span class="sd">        meta = fetch_metadata(&quot;zeisel-brain-2015&quot;, &quot;2023-12-14&quot;)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">set_assays</span><span class="p">(</span><span class="n">new_assays</span><span class="p">)</span>
 
-<span class="sd">    Args:</span>
-<span class="sd">        name:</span>
-<span class="sd">            Name of the dataset.</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">SingleCellExperiment</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">get_alternative_experiment_names</span><span class="p">())</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">forbid_nested_altexp</span> <span class="ow">and</span> <span class="n">level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Nested alternative experiments are forbidden.&quot;</span><span class="p">)</span>
 
-<span class="sd">        version:</span>
-<span class="sd">            Version of the dataset.</span>
+        <span class="n">new_alts</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">altname</span><span class="p">,</span> <span class="n">altexp</span> <span class="ow">in</span> <span class="n">x</span><span class="o">.</span><span class="n">alternative_experiments</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">remove_altexp_coldata</span><span class="p">:</span>
+                <span class="n">altexp</span> <span class="o">=</span> <span class="n">altexp</span><span class="o">.</span><span class="n">set_column_data</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
 
-<span class="sd">        path:</span>
-<span class="sd">            Path to a subdataset, if name contains multiple datasets.</span>
-<span class="sd">            Defaults to None.</span>
+            <span class="n">altexp</span> <span class="o">=</span> <span class="n">_polish_dataset</span><span class="p">(</span>
+                <span class="n">altexp</span><span class="p">,</span>
+                <span class="n">reformat_assay_by_density</span><span class="o">=</span><span class="n">reformat_assay_by_density</span><span class="p">,</span>
+                <span class="n">attempt_integer_conversion</span><span class="o">=</span><span class="n">attempt_integer_conversion</span><span class="p">,</span>
+                <span class="n">remove_altexp_coldata</span><span class="o">=</span><span class="n">remove_altexp_coldata</span><span class="p">,</span>
+                <span class="n">forbid_nested_altexp</span><span class="o">=</span><span class="n">forbid_nested_altexp</span><span class="p">,</span>
+                <span class="n">level</span><span class="o">=</span><span class="n">level</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span>
+            <span class="p">)</span>
 
-<span class="sd">        package:</span>
-<span class="sd">            Name of the package.</span>
-<span class="sd">            Defaults to &quot;scRNAseq&quot;.</span>
+            <span class="n">new_alts</span><span class="p">[</span><span class="n">altname</span><span class="p">]</span> <span class="o">=</span> <span class="n">altexp</span>
 
-<span class="sd">        cache:</span>
-<span class="sd">            Path to the cache directory.</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">set_alternative_experiments</span><span class="p">(</span><span class="n">new_alts</span><span class="p">)</span>
 
-<span class="sd">        overwrite:</span>
-<span class="sd">            Whether to overwrite existing files.</span>
-<span class="sd">            Defaults to False.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        Dictionary containing metadata for the specified dataset.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">remote_path</span> <span class="o">=</span> <span class="s2">&quot;_bioconductor.json&quot;</span> <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">/_bioconductor.json&quot;</span>
-    <span class="n">local_path</span> <span class="o">=</span> <span class="n">save_file</span><span class="p">(</span>
-        <span class="n">package</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span>
-    <span class="p">)</span>
-
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">metadata</span></div>
-
+    <span class="k">return</span> <span class="n">x</span>
 </pre></div>
         </article>
       </div>

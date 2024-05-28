@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
     <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
-        <title>scrnaseq.fetch_dataset - scrnaseq 0.1.0 documentation</title>
+        <title>scrnaseq.search_datasets - scrnaseq 0.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=387cc868" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
@@ -254,174 +254,123 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <h1>Source code for scrnaseq.fetch_dataset</h1><div class="highlight"><pre>
-<span></span><span class="kn">import</span> <span class="nn">atexit</span>
-<span class="kn">import</span> <span class="nn">json</span>
-<span class="kn">import</span> <span class="nn">os</span>
+          <h1>Source code for scrnaseq.search_datasets</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">sqlite3</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">dolomite_base</span> <span class="kn">import</span> <span class="n">alt_read_object</span><span class="p">,</span> <span class="n">alt_read_object_function</span>
-<span class="kn">from</span> <span class="nn">gypsum_client</span> <span class="kn">import</span> <span class="n">cache_directory</span><span class="p">,</span> <span class="n">save_file</span><span class="p">,</span> <span class="n">save_version</span>
-<span class="kn">from</span> <span class="nn">summarizedexperiment</span> <span class="kn">import</span> <span class="n">SummarizedExperiment</span>
+<span class="kn">import</span> <span class="nn">pandas</span> <span class="k">as</span> <span class="nn">pd</span>
+<span class="kn">from</span> <span class="nn">gypsum_client</span> <span class="kn">import</span> <span class="n">cache_directory</span><span class="p">,</span> <span class="n">fetch_metadata_database</span>
+<span class="kn">from</span> <span class="nn">gypsum_client.search_metadata</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">GypsumSearchClause</span><span class="p">,</span>
+    <span class="n">define_text_query</span><span class="p">,</span>
+    <span class="n">search_metadata_text</span><span class="p">,</span>
+    <span class="n">search_metadata_text_filter</span><span class="p">,</span>
+<span class="p">)</span>
 
-<span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">single_cell_load_object</span>
+<span class="kn">from</span> <span class="nn">.list_datasets</span> <span class="kn">import</span> <span class="n">_format_query_results</span><span class="p">,</span> <span class="n">_sanitize_query_to_output</span>
 
 <span class="n">__author__</span> <span class="o">=</span> <span class="s2">&quot;Jayaram Kancherla&quot;</span>
 <span class="n">__copyright__</span> <span class="o">=</span> <span class="s2">&quot;Jayaram Kancherla&quot;</span>
 <span class="n">__license__</span> <span class="o">=</span> <span class="s2">&quot;MIT&quot;</span>
 
 
-<div class="viewcode-block" id="fetch_dataset">
-<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.fetch_dataset.fetch_dataset">[docs]</a>
-<span class="k">def</span> <span class="nf">fetch_dataset</span><span class="p">(</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">package</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;scRNAseq&quot;</span><span class="p">,</span>
+<div class="viewcode-block" id="search_datasets">
+<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.search_datasets.search_datasets">[docs]</a>
+<span class="k">def</span> <span class="nf">search_datasets</span><span class="p">(</span>
+    <span class="n">query</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">GypsumSearchClause</span><span class="p">],</span>
     <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">cache_directory</span><span class="p">(),</span>
     <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">realize_assays</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">realize_reduced_dims</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SummarizedExperiment</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch a single-cell dataset from the gypsum backend.</span>
+    <span class="n">latest</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Search for datasets of interest based on matching text in the</span>
+<span class="sd">    associated metadata.</span>
+
+<span class="sd">    This is a wrapper around</span>
+<span class="sd">    :py:func:`~gypsum_client.search_metadata.search_metadata_text`.</span>
+
+<span class="sd">    The returned DataFrame contains the usual suspects like the title</span>
+<span class="sd">    and description for each dataset, the number of rows and columns,</span>
+<span class="sd">    the organisms and genome builds involved, whether the dataset has</span>
+<span class="sd">    any pre-computed reduced dimensions, and so on.</span>
+
+<span class="sd">    More details can be found in the Bioconductor</span>
+<span class="sd">    `metadata index &lt;https://github.com/ArtifactDB/bioconductor-metadata-index&gt;`_.</span>
 
 <span class="sd">    See Also:</span>
-<span class="sd">        `metadata index &lt;https://github.com/ArtifactDB/bioconductor-metadata-index&gt;`_,</span>
-<span class="sd">        on the expected schema for the metadata.</span>
+<span class="sd">        :py:func:`~scrnaseq.list_datasets.list_datasets`, to list all</span>
+<span class="sd">        available datasets.</span>
 
-<span class="sd">        :py:func:`~scrnaseq.save_dataset.save_dataset` and</span>
-<span class="sd">        :py:func:`~gypsum_client.upload_file_operations.upload_directory`,</span>
-<span class="sd">        to save and upload a dataset.</span>
+<span class="sd">        :py:func:`~gypsum_client.search_metadata.search_metadata_text`,</span>
+<span class="sd">        to search metadata.</span>
 
-<span class="sd">        :py:func:`~scrnaseq.list_datasets.list_datasets` and :py:func:`~scrnaseq.list_versions.list_versions`,</span>
-<span class="sd">        to get possible values for `name` and `version`.</span>
-
-<span class="sd">    Example:</span>
-
-<span class="sd">        .. code-block:: python</span>
-
-<span class="sd">            sce = fetch_dataset(&quot;zeisel-brain-2015&quot;, &quot;2023-12-14&quot;)</span>
-
-<span class="sd">    Args:</span>
-<span class="sd">        name:</span>
-<span class="sd">            Name of the dataset.</span>
-
-<span class="sd">        version:</span>
-<span class="sd">            Version of the dataset.</span>
-
-<span class="sd">        path:</span>
-<span class="sd">            Path to a subdataset, if name contains multiple datasets.</span>
-<span class="sd">            Defaults to None.</span>
-
-<span class="sd">        package:</span>
-<span class="sd">            Name of the package.</span>
-<span class="sd">            Defaults to &quot;scRNAseq&quot;.</span>
-
-<span class="sd">        cache_dir:</span>
-<span class="sd">            Path to cache directory.</span>
-
-<span class="sd">        overwrite:</span>
-<span class="sd">            Whether to overwrite existing files.</span>
-<span class="sd">            Defaults to False.</span>
-
-<span class="sd">        realize_assays:</span>
-<span class="sd">            Whether to realize assays into memory.</span>
-<span class="sd">            Defaults to False.</span>
-
-<span class="sd">        realize_reduced_dims:</span>
-<span class="sd">            Whether to realize reduced dimensions into memory.</span>
-<span class="sd">            Defaults to True.</span>
-
-<span class="sd">        **kwargs:</span>
-<span class="sd">            Further arguments to pass to</span>
-<span class="sd">            :py:func:`~dolomite_base.read_object.read_object`.</span>
-
-<span class="sd">    Returns:</span>
-<span class="sd">        The dataset as a</span>
-<span class="sd">        :py:class:`~summarizedexperiment.SummarizedExperiment.SummarizedExperiment`</span>
-<span class="sd">        or one of its subclasses.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="n">cache_dir</span> <span class="o">=</span> <span class="n">cache_directory</span><span class="p">(</span><span class="n">cache_dir</span><span class="p">)</span>
-
-    <span class="n">version_path</span> <span class="o">=</span> <span class="n">save_version</span><span class="p">(</span>
-        <span class="n">package</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span>
-    <span class="p">)</span>
-    <span class="n">obj_path</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="n">version_path</span> <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">version_path</span><span class="p">,</span> <span class="n">path</span><span class="o">.</span><span class="n">rstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">))</span>
-    <span class="p">)</span>
-
-    <span class="n">old</span> <span class="o">=</span> <span class="n">alt_read_object_function</span><span class="p">(</span><span class="n">single_cell_load_object</span><span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">reset_alt_read_func</span><span class="p">():</span>
-        <span class="n">alt_read_object_function</span><span class="p">(</span><span class="n">old</span><span class="p">)</span>
-
-    <span class="n">atexit</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">reset_alt_read_func</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">alt_read_object</span><span class="p">(</span>
-        <span class="n">obj_path</span><span class="p">,</span>
-        <span class="n">scrnaseq_realize_assays</span><span class="o">=</span><span class="n">realize_assays</span><span class="p">,</span>
-        <span class="n">scrnaseq_realize_reduced_dims</span><span class="o">=</span><span class="n">realize_reduced_dims</span><span class="p">,</span>
-        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
-    <span class="p">)</span></div>
-
-
-
-<div class="viewcode-block" id="fetch_metadata">
-<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.fetch_dataset.fetch_metadata">[docs]</a>
-<span class="k">def</span> <span class="nf">fetch_metadata</span><span class="p">(</span>
-    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">version</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">package</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;scRNAseq&quot;</span><span class="p">,</span>
-    <span class="n">cache_dir</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">cache_directory</span><span class="p">(),</span>
-    <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Fetch metadata for a dataset from the gypsum backend.</span>
-
-<span class="sd">    See Also:</span>
-<span class="sd">        :py:func:`~.fetch_dataset`,</span>
-<span class="sd">        to fetch a dataset.</span>
-
-<span class="sd">    Example:</span>
+<span class="sd">    Examples:</span>
 
 <span class="sd">    .. code-block:: python</span>
 
-<span class="sd">        meta = fetch_metadata(&quot;zeisel-brain-2015&quot;, &quot;2023-12-14&quot;)</span>
+<span class="sd">        res = search_datasets(&quot;brain&quot;)</span>
+
+<span class="sd">        res = search_datasets(define_text_query(&quot;Neuro%&quot;, partial=True&quot;)</span>
+
+<span class="sd">        res = search_datasets(define_text_query(&quot;10090&quot;, field=&quot;taxonomy_id&quot;)</span>
+
+<span class="sd">        res = search_datasets(</span>
+<span class="sd">            define_text_query(&quot;GRCm38&quot;, field=&quot;genome&quot;) &amp;</span>
+<span class="sd">            (define_text_query(&quot;neuro%&quot;, partial=True) |</span>
+<span class="sd">                define_text_query(&quot;pancrea%&quot;, partial=True))</span>
+<span class="sd">        )</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        name:</span>
-<span class="sd">            Name of the dataset.</span>
+<span class="sd">        query:</span>
+<span class="sd">            The search query string or a gypsum.search.object for</span>
+<span class="sd">            more complex queries.</span>
 
-<span class="sd">        version:</span>
-<span class="sd">            Version of the dataset.</span>
-
-<span class="sd">        path:</span>
-<span class="sd">            Path to a subdataset, if name contains multiple datasets.</span>
-<span class="sd">            Defaults to None.</span>
-
-<span class="sd">        package:</span>
-<span class="sd">            Name of the package.</span>
-<span class="sd">            Defaults to &quot;scRNAseq&quot;.</span>
-
-<span class="sd">        cache:</span>
-<span class="sd">            Path to the cache directory.</span>
+<span class="sd">        cache_directory:</span>
+<span class="sd">            Path to cache directory.</span>
 
 <span class="sd">        overwrite:</span>
-<span class="sd">            Whether to overwrite existing files.</span>
+<span class="sd">            Whether to overwrite the existing cache.</span>
 <span class="sd">            Defaults to False.</span>
 
+<span class="sd">        latest:</span>
+<span class="sd">            Whether to fetch only the latest versions of datasets.</span>
+<span class="sd">            Defaults to True.</span>
+
 <span class="sd">    Returns:</span>
-<span class="sd">        Dictionary containing metadata for the specified dataset.</span>
+<span class="sd">        A :py:class:`~pandas.DataFrame` where each row corresponds to</span>
+<span class="sd">        a dataset, containing various columns of metadata.</span>
+<span class="sd">        Some columns may be lists to capture 1:many mappings.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">remote_path</span> <span class="o">=</span> <span class="s2">&quot;_bioconductor.json&quot;</span> <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">/_bioconductor.json&quot;</span>
-    <span class="n">local_path</span> <span class="o">=</span> <span class="n">save_file</span><span class="p">(</span>
-        <span class="n">package</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">version</span><span class="p">,</span> <span class="n">remote_path</span><span class="p">,</span> <span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span>
-    <span class="p">)</span>
 
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">local_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
-        <span class="n">metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+    <span class="n">bpath</span> <span class="o">=</span> <span class="n">fetch_metadata_database</span><span class="p">(</span><span class="n">cache_dir</span><span class="o">=</span><span class="n">cache_dir</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">)</span>
 
-    <span class="k">return</span> <span class="n">metadata</span></div>
+    <span class="n">where</span> <span class="o">=</span> <span class="n">search_metadata_text_filter</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+    <span class="n">cond</span> <span class="o">=</span> <span class="n">where</span><span class="p">[</span><span class="s2">&quot;where&quot;</span><span class="p">]</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="n">where</span><span class="p">[</span><span class="s2">&quot;parameters&quot;</span><span class="p">]</span>
+
+    <span class="n">conn</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="n">bpath</span><span class="p">,</span> <span class="n">check_same_thread</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="n">stmt</span> <span class="o">=</span> <span class="s2">&quot;SELECT json_extract(metadata, &#39;$&#39;) AS meta, versions.asset AS asset, versions.version AS version, path&quot;</span>
+    <span class="n">key_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;meta&quot;</span><span class="p">,</span> <span class="s2">&quot;asset&quot;</span><span class="p">,</span> <span class="s2">&quot;version&quot;</span><span class="p">,</span> <span class="s2">&quot;path&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">latest</span><span class="p">:</span>
+        <span class="n">stmt</span> <span class="o">+=</span> <span class="s2">&quot;, versions.latest AS latest&quot;</span>
+        <span class="n">key_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;latest&quot;</span><span class="p">)</span>
+
+    <span class="n">stmt</span> <span class="o">+=</span> <span class="s2">&quot; FROM paths LEFT JOIN versions ON paths.vid = versions.vid WHERE versions.project = &#39;scRNAseq&#39;&quot;</span>
+
+    <span class="k">if</span> <span class="n">latest</span><span class="p">:</span>
+        <span class="n">stmt</span> <span class="o">+=</span> <span class="s2">&quot; AND versions.latest = 1&quot;</span>
+
+    <span class="k">if</span> <span class="n">cond</span><span class="p">:</span>
+        <span class="n">stmt</span> <span class="o">+=</span> <span class="s2">&quot; AND &quot;</span> <span class="o">+</span> <span class="s2">&quot; AND &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">cond</span><span class="p">)</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">cursor</span> <span class="o">=</span> <span class="n">conn</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">stmt</span><span class="p">)</span>
+
+    <span class="n">_qresults</span> <span class="o">=</span> <span class="n">cursor</span><span class="o">.</span><span class="n">fetchall</span><span class="p">()</span>
+    <span class="n">conn</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="n">results</span> <span class="o">=</span> <span class="n">_format_query_results</span><span class="p">(</span><span class="n">_qresults</span><span class="p">,</span> <span class="n">key_names</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">_sanitize_query_to_output</span><span class="p">(</span><span class="n">results</span><span class="p">,</span> <span class="n">latest</span><span class="p">)</span></div>
 
 </pre></div>
         </article>

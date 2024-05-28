@@ -1,17 +1,10 @@
 # scrnaseq
 
-Add a short description here!
+The `scRNAseq` package provides convenient access to several publicly available single-cell datasets in the form of [SingleCellExperiment](https://github.com/biocpy/singlecellexperiment) objects. Users can obtain a `SingleCellExperiment` and transform it into analysis-ready representations for immediate use.
 
+To enable discovery, each dataset is decorated with metadata such as the study title/abstract, the species, the number of cells, etc. Users can also contribute their own published datasets to enable re-use by the wider Bioconductor/BiocPy community.
 
-## Note
-
-> This is the main page of your project's [Sphinx] documentation. It is
-> formatted in [Markdown]. Add additional pages by creating md-files in
-> `docs` or rst-files (formatted in [reStructuredText]) and adding links to
-> them in the `Contents` section below.
->
-> Please check [Sphinx] and [MyST] for more information
-> about how to document your project and how to configure your preferences.
+**Also check out the R version of this library [here@scRNAseq](https://bioconductor.org/packages/devel/data/experiment/html/scRNAseq.html) published to Bioconductor.**
 
 
 ## Contents
@@ -20,11 +13,11 @@ Add a short description here!
 :maxdepth: 2
 
 Overview <readme>
+Module Reference <api/modules>
 Contributions & Help <contributing>
 License <license>
 Authors <authors>
 Changelog <changelog>
-Module Reference <api/modules>
 ```
 
 ## Indices and tables
