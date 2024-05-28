@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html" /><link rel="search" title="Search" href="search.html" /><link rel="next" title="scrnaseq" href="api/modules.html" /><link rel="prev" title="scrnaseq" href="index.html" />
 
     <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
-        <title>scrnaseq - scrnaseq 0.1.0 documentation</title>
+        <title>scrnaseq - scrnaseq 0.1.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=387cc868" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=36a5483c" />
@@ -179,7 +179,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">scrnaseq 0.1.0 documentation</div></a>
+      <a href="index.html"><div class="brand">scrnaseq 0.1.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -203,7 +203,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
   
-  <span class="sidebar-brand-text">scrnaseq 0.1.0 documentation</span>
+  <span class="sidebar-brand-text">scrnaseq 0.1.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -291,21 +291,39 @@
 <p>The <code class="docutils literal notranslate"><span class="pre">list_datasets()</span></code> function will display all available datasets along with their metadata. This can be used to discover interesting datasets for further analysis.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">scrnaseq</span>
 <span class="n">datasets</span> <span class="o">=</span> <span class="n">scrnaseq</span><span class="o">.</span><span class="n">list_datasets</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">datasets</span><span class="p">[[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;version&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+
+<span class="c1">## output</span>
+<span class="c1"># |    | name                  | version    |</span>
+<span class="c1"># |---:|:----------------------|:-----------|</span>
+<span class="c1"># |  0 | romanov-brain-2017    | 2023-12-19 |</span>
+<span class="c1"># |  1 | campbell-brain-2017   | 2023-12-14 |</span>
+<span class="c1"># |  2 | zhong-prefrontal-2018 | 2023-12-22 |</span>
 </pre></div>
 </div>
 <p>This returns a pandas <code class="docutils literal notranslate"><span class="pre">DataFrame</span></code> to easily filter and download datasets of interest.</p>
 <p>Users can also search on the metadata text using the <code class="docutils literal notranslate"><span class="pre">search_datasets()</span></code> function. This accepts both simple text queries as well as more complicated expressions involving boolean operations.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Find all datasets involving pancreas.</span>
-<span class="n">res</span> <span class="o">=</span> <span class="n">search_datasets</span><span class="p">(</span><span class="s2">&quot;pancreas&quot;</span><span class="p">)</span>
+<span class="n">res</span> <span class="o">=</span> <span class="n">scrnaseq</span><span class="o">.</span><span class="n">search_datasets</span><span class="p">(</span><span class="s2">&quot;pancreas&quot;</span><span class="p">)</span>
 
 <span class="c1"># Find all mm10 datasets involving pancreas or neurons.</span>
-<span class="n">res</span> <span class="o">=</span> <span class="n">search_datasets</span><span class="p">(</span>
+<span class="kn">from</span> <span class="nn">gypsum_client</span> <span class="kn">import</span> <span class="n">define_text_query</span>
+
+<span class="n">res</span> <span class="o">=</span> <span class="n">scrnaseq</span><span class="o">.</span><span class="n">search_datasets</span><span class="p">(</span>
      <span class="n">define_text_query</span><span class="p">(</span><span class="s2">&quot;GRCm38&quot;</span><span class="p">,</span> <span class="n">field</span><span class="o">=</span><span class="s2">&quot;genome&quot;</span><span class="p">)</span>
      <span class="o">&amp;</span> <span class="p">(</span>
           <span class="n">define_text_query</span><span class="p">(</span><span class="s2">&quot;neuro%&quot;</span><span class="p">,</span> <span class="n">partial</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
           <span class="o">|</span> <span class="n">define_text_query</span><span class="p">(</span><span class="s2">&quot;pancrea%&quot;</span><span class="p">,</span> <span class="n">partial</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
      <span class="p">)</span>
 <span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">res</span><span class="p">[[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;version&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">head</span><span class="p">(</span><span class="mi">3</span><span class="p">))</span>
+
+<span class="c1">## output</span>
+<span class="c1"># |    | name                    | version    |</span>
+<span class="c1"># |---:|:------------------------|:-----------|</span>
+<span class="c1"># |  0 | romanov-brain-2017      | 2023-12-19 |</span>
+<span class="c1"># |  1 | campbell-brain-2017     | 2023-12-14 |</span>
+<span class="c1"># |  2 | fletcher-olfactory-2019 | 2023-12-21 |</span>
 </pre></div>
 </div>
 <p>Search results are not guaranteed to be reproducible - more datasets may be added over time, and existing datasets may be updated with new versions. Once a dataset of interest is identified, users should explicitly list the name and version of the dataset in their scripts to ensure reproducibility.</p>
@@ -315,20 +333,69 @@
 <p>The <code class="docutils literal notranslate"><span class="pre">fetch_dataset()</span></code> function will download a particular dataset, as <code class="docutils literal notranslate"><span class="pre">SingleCellExperiment</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sce</span> <span class="o">=</span> <span class="n">scrnaseq</span><span class="o">.</span><span class="n">fetch_dataset</span><span class="p">(</span><span class="s2">&quot;zeisel-brain-2015&quot;</span><span class="p">,</span> <span class="s2">&quot;2023-12-14&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">sce</span><span class="p">)</span>
+
+<span class="c1">## output</span>
+<span class="c1"># class: SingleCellExperiment</span>
+<span class="c1"># dimensions: (20006, 3005)</span>
+<span class="c1"># assays(1): [&#39;counts&#39;]</span>
+<span class="c1"># row_data columns(1): [&#39;featureType&#39;]</span>
+<span class="c1"># row_names(20006): [&#39;Tspan12&#39;, &#39;Tshz1&#39;, &#39;Fnbp1l&#39;, ..., &#39;mt-Rnr2&#39;, &#39;mt-Rnr1&#39;, &#39;mt-Nd4l&#39;]</span>
+<span class="c1"># column_data columns(9): [&#39;tissue&#39;, &#39;group #&#39;, &#39;total mRNA mol&#39;, &#39;well&#39;, &#39;sex&#39;, &#39;age&#39;, &#39;diameter&#39;, &#39;level1class&#39;, &#39;level2class&#39;]</span>
+<span class="c1"># column_names(3005): [&#39;1772071015_C02&#39;, &#39;1772071017_G12&#39;, &#39;1772071017_A05&#39;, ..., &#39;1772063068_D01&#39;, &#39;1772066098_A12&#39;, &#39;1772058148_F03&#39;]</span>
+<span class="c1"># main_experiment_name: gene</span>
+<span class="c1"># reduced_dims(0): []</span>
+<span class="c1"># alternative_experiments(2): [&#39;repeat&#39;, &#39;ERCC&#39;]</span>
+<span class="c1"># row_pairs(0): []</span>
+<span class="c1"># column_pairs(0): []</span>
+<span class="c1"># metadata(0):</span>
 </pre></div>
 </div>
 <p>For studies that generate multiple datasets, the dataset of interest must be explicitly requested via the <code class="docutils literal notranslate"><span class="pre">path</span></code> argument:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sce</span> <span class="o">=</span> <span class="n">scrnaseq</span><span class="o">.</span><span class="n">fetch_dataset</span><span class="p">(</span><span class="s2">&quot;baron-pancreas-2016&quot;</span><span class="p">,</span> <span class="s2">&quot;2023-12-14&quot;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;human&quot;</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">sce</span><span class="p">)</span>
+
+<span class="c1">## output</span>
+<span class="c1"># class: SingleCellExperiment</span>
+<span class="c1"># dimensions: (20125, 8569)</span>
+<span class="c1"># assays(1): [&#39;counts&#39;]</span>
+<span class="c1"># row_data columns(0): []</span>
+<span class="c1"># row_names(20125): [&#39;A1BG&#39;, &#39;A1CF&#39;, &#39;A2M&#39;, ..., &#39;ZZEF1&#39;, &#39;ZZZ3&#39;, &#39;pk&#39;]</span>
+<span class="c1"># column_data columns(2): [&#39;donor&#39;, &#39;label&#39;]</span>
+<span class="c1"># column_names(8569): [&#39;human1_lib1.final_cell_0001&#39;, &#39;human1_lib1.final_cell_0002&#39;, &#39;human1_lib1.final_cell_0003&#39;, ..., &#39;human4_lib3.final_cell_0699&#39;, &#39;human4_lib3.final_cell_0700&#39;, &#39;human4_lib3.final_cell_0701&#39;]</span>
+<span class="c1"># main_experiment_name:</span>
+<span class="c1"># reduced_dims(0): []</span>
+<span class="c1"># alternative_experiments(0): []</span>
+<span class="c1"># row_pairs(0): []</span>
+<span class="c1"># column_pairs(0): []</span>
+<span class="c1"># metadata(0):</span>
 </pre></div>
 </div>
 <p>By default, array data is loaded as a file-backed <code class="docutils literal notranslate"><span class="pre">DelayedArray</span></code> from the <a class="reference external" href="https://github.com/BiocPy/HDF5Array">HDF5Array</a> package. Setting <code class="docutils literal notranslate"><span class="pre">realize_assays=True</span></code> and/or <code class="docutils literal notranslate"><span class="pre">realize_reduced_dims=True</span></code> will coerce file-backed arrays to numpy or scipy sparse (csr/csc) objects.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sce</span> <span class="o">=</span> <span class="n">scrnaseq</span><span class="o">.</span><span class="n">fetch_dataset</span><span class="p">(</span><span class="s2">&quot;baron-pancreas-2016&quot;</span><span class="p">,</span> <span class="s2">&quot;2023-12-14&quot;</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s2">&quot;human&quot;</span><span class="p">,</span> <span class="n">realize_assays</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">sce</span><span class="p">)</span>
+
+<span class="c1">## output</span>
+<span class="c1"># class: SingleCellExperiment</span>
+<span class="c1"># dimensions: (20125, 8569)</span>
+<span class="c1"># assays(1): [&#39;counts&#39;]</span>
+<span class="c1"># row_data columns(0): []</span>
+<span class="c1"># row_names(20125): [&#39;A1BG&#39;, &#39;A1CF&#39;, &#39;A2M&#39;, ..., &#39;ZZEF1&#39;, &#39;ZZZ3&#39;, &#39;pk&#39;]</span>
+<span class="c1"># column_data columns(2): [&#39;donor&#39;, &#39;label&#39;]</span>
+<span class="c1"># column_names(8569): [&#39;human1_lib1.final_cell_0001&#39;, &#39;human1_lib1.final_cell_0002&#39;, &#39;human1_lib1.final_cell_0003&#39;, ..., &#39;human4_lib3.final_cell_0699&#39;, &#39;human4_lib3.final_cell_0700&#39;, &#39;human4_lib3.final_cell_0701&#39;]</span>
+<span class="c1"># main_experiment_name:</span>
+<span class="c1"># reduced_dims(0): []</span>
+<span class="c1"># alternative_experiments(0): []</span>
+<span class="c1"># row_pairs(0): []</span>
+<span class="c1"># column_pairs(0): []</span>
+<span class="c1"># metadata(0):</span>
 </pre></div>
 </div>
 <p>Users can also fetch the metadata associated with each dataset:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">meta</span> <span class="o">=</span> <span class="n">scrnaseq</span><span class="o">.</span><span class="n">fetch_metadata</span><span class="p">(</span><span class="s2">&quot;zeisel-brain-2015&quot;</span><span class="p">,</span> <span class="s2">&quot;2023-12-14&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+<span class="c1">## output</span>
+<span class="c1"># dict_keys([&#39;title&#39;, &#39;description&#39;, &#39;taxonomy_id&#39;, &#39;genome&#39;, &#39;sources&#39;, &#39;maintainer_name&#39;, &#39;maintainer_email&#39;, &#39;bioconductor_version&#39;, &#39;applications&#39;])</span>
 </pre></div>
 </div>
 </section>
@@ -492,7 +559,7 @@ information on PyScaffold see <a class="reference external" href="https://pyscaf
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=01f34227"></script>
+</div><script src="_static/documentation_options.js?v=a58bc63e"></script>
     <script src="_static/doctools.js?v=9a2dae69"></script>
     <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="_static/scripts/furo.js?v=4e2eecee"></script>
