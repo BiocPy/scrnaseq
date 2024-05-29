@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
     <!-- Generated with Sphinx 7.3.7 and Furo 2024.05.06 -->
-        <title>scrnaseq.save_dataset - scrnaseq 0.1.1 documentation</title>
+        <title>scrnaseq.save_dataset - scrnaseq 0.1.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=fa44fd50" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?v=387cc868" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?v=36a5483c" />
@@ -178,7 +178,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">scrnaseq 0.1.1 documentation</div></a>
+      <a href="../../index.html"><div class="brand">scrnaseq 0.1.2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -202,7 +202,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
   
   
-  <span class="sidebar-brand-text">scrnaseq 0.1.1 documentation</span>
+  <span class="sidebar-brand-text">scrnaseq 0.1.2 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -264,6 +264,7 @@
 <span class="kn">import</span> <span class="nn">dolomite_base</span> <span class="k">as</span> <span class="nn">dl</span>
 <span class="kn">from</span> <span class="nn">gypsum_client</span> <span class="kn">import</span> <span class="n">fetch_metadata_schema</span><span class="p">,</span> <span class="n">validate_metadata</span>
 <span class="kn">from</span> <span class="nn">singlecellexperiment</span> <span class="kn">import</span> <span class="n">SingleCellExperiment</span>
+<span class="kn">from</span> <span class="nn">summarizedexperiment</span> <span class="kn">import</span> <span class="n">SummarizedExperiment</span>
 
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="kn">import</span> <span class="n">format_object_metadata</span>
 
@@ -281,7 +282,9 @@
 <span class="sd">    Args:</span>
 <span class="sd">        x:</span>
 <span class="sd">            An object containing single-cell data.</span>
-<span class="sd">            May be a derivative of SummarizedExperiment or AnnData.</span>
+<span class="sd">            May be a derivative of</span>
+<span class="sd">            :py:class:`~summarizedexperiment.SummarizedExperiment.SummarizedExperiment`</span>
+<span class="sd">            or :py:class:`~anndata.AnnData`.</span>
 
 <span class="sd">        path:</span>
 <span class="sd">            Path to a new directory to save the dataset.</span>
@@ -340,15 +343,11 @@
 
 
 
-<div class="viewcode-block" id="save_dataset_sce">
-<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.save_dataset.save_dataset_sce">[docs]</a>
-<span class="nd">@save_dataset</span><span class="o">.</span><span class="n">register</span>
-<span class="k">def</span> <span class="nf">save_dataset_sce</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">SingleCellExperiment</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save :py:class:`~singlecellexperiment.SingleCellExperiment.SingleCellExperiment` to disk.&quot;&quot;&quot;</span>
+<span class="k">def</span> <span class="nf">_save_se</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="p">):</span>
     <span class="n">schema</span> <span class="o">=</span> <span class="n">fetch_metadata_schema</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="s2">&quot;bioconductor_version&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">metadata</span><span class="p">:</span>
-        <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;bioconductor_version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;3.14&quot;</span>  <span class="c1"># current release</span>
+        <span class="n">metadata</span><span class="p">[</span><span class="s2">&quot;bioconductor_version&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;3.19&quot;</span>  <span class="c1"># current release</span>
 
     <span class="n">validate_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">schema</span><span class="p">)</span>
 
@@ -371,7 +370,22 @@
     <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="s2">&quot;_bioconductor.json&quot;</span><span class="p">),</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
         <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">contents</span><span class="p">)</span>
 
-    <span class="k">return</span></div>
+
+<div class="viewcode-block" id="save_dataset_sce">
+<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.save_dataset.save_dataset_sce">[docs]</a>
+<span class="nd">@save_dataset</span><span class="o">.</span><span class="n">register</span>
+<span class="k">def</span> <span class="nf">save_dataset_sce</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">SingleCellExperiment</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save :py:class:`~singlecellexperiment.SingleCellExperiment.SingleCellExperiment` to disk.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_save_se</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="save_dataset_se">
+<a class="viewcode-back" href="../../api/scrnaseq.html#scrnaseq.save_dataset.save_dataset_se">[docs]</a>
+<span class="nd">@save_dataset</span><span class="o">.</span><span class="n">register</span>
+<span class="k">def</span> <span class="nf">save_dataset_se</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">SummarizedExperiment</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Save :py:class:`~summarizedexperiment.SummarizedExperiment.SummarizedExperiment` to disk.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_save_se</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">metadata</span><span class="p">)</span></div>
 
 
 
@@ -425,7 +439,7 @@
       
     </aside>
   </div>
-</div><script src="../../_static/documentation_options.js?v=a58bc63e"></script>
+</div><script src="../../_static/documentation_options.js?v=92734c54"></script>
     <script src="../../_static/doctools.js?v=9a2dae69"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/scripts/furo.js?v=4e2eecee"></script>
