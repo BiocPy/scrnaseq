@@ -44,7 +44,7 @@ def test_save_dataset_sce():
     with open(os.path.join(tmp, "_bioconductor.json")) as f:
         saved_meta = json.load(f)
 
-    assert saved_meta["bioconductor_version"] == "3.14"  # Placeholder version
+    assert saved_meta["bioconductor_version"] == "3.19"
 
     # Test validation failure
     meta["title"] = 1234
@@ -90,7 +90,7 @@ def test_save_dataset_anndata():
     with open(os.path.join(tmp, "_bioconductor.json")) as f:
         saved_meta = json.load(f)
 
-    assert saved_meta["bioconductor_version"] == "3.14"  # Placeholder version
+    assert saved_meta["bioconductor_version"] == "3.19"
 
     # Test validation failure
     meta["title"] = 1234
