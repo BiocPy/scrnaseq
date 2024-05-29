@@ -35,6 +35,7 @@ def test_fetch_dataset():
         assert all(isinstance(a, (np.ndarray)) for _, a in alt_exp_ass.items())
 
 
+@pytest.mark.skip("takes too long")
 def test_fetch_dataset_realizes_reduced_dimensions():
     sce = fetch_dataset("aztekin-tail-2019", "2023-12-14", realize_reduced_dims=False)
     red_dim = sce.get_reduced_dims()

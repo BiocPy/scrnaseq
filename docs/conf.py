@@ -316,6 +316,7 @@ intersphinx_mapping = {
     "gypsum_client": ("https://artifactdb.github.io/gypsum-py", None),
     "delayedarray": ("https://biocpy.github.io/DelayedArray", None),
     "dolomite_base": ("https://artifactdb.github.io/dolomite-base", None),
+    "anndata": ("https://anndata.readthedocs.io/en/latest/", None),
 }
 
 print(f"loading configurations for {project} {version} ...", file=sys.stderr)
