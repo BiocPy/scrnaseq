@@ -114,7 +114,7 @@ def format_object_metadata(x) -> dict:
             "rows": x.shape[0],
             "columns": x.shape[1],
             "assays": list(x.get_assay_names()),
-            "column_annotations": list(x.get_column_names()),
+            "column_annotations": list(x.get_column_data().get_column_names()),
         }
 
         if isinstance(x, SingleCellExperiment):
@@ -122,6 +122,7 @@ def format_object_metadata(x) -> dict:
                 "reduced_dimensions": list(x.get_reduced_dim_names()),
                 "alternative_experiments": list(x.get_alternative_experiment_names()),
             }
+
     elif isinstance(x, BiocFrame):
         _meta["data_frame"] = {
             "rows": len(x),
