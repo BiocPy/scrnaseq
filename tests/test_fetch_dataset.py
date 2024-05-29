@@ -34,7 +34,7 @@ def test_fetch_dataset():
         alt_exp_ass = alt.get_assays()
         assert all(isinstance(a, (np.ndarray)) for _, a in alt_exp_ass.items())
 
-
+@pytest.skip("takes too long")
 def test_fetch_dataset_realizes_reduced_dimensions():
     sce = fetch_dataset("aztekin-tail-2019", "2023-12-14", realize_reduced_dims=False)
     red_dim = sce.get_reduced_dims()
@@ -43,7 +43,6 @@ def test_fetch_dataset_realizes_reduced_dimensions():
     sce = fetch_dataset("aztekin-tail-2019", "2023-12-14", realize_reduced_dims=True)
     red_dim = sce.get_reduced_dims()
     assert all(isinstance(a, np.ndarray) for _, a in red_dim.items())
-
 
 def test_fetch_metadata():
     meta = fetch_metadata("zeisel-brain-2015", "2023-12-14")

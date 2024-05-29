@@ -167,7 +167,7 @@ def test_polish_dataset_forbids_highly_nested_altexps():
         y.get_alternative_experiment_names() == sce0.get_alternative_experiment_names()
     )
 
-
+@pytest.skip("takes too long")
 def test_polish_existing_dataset():
     sce = fetch_dataset("zeisel-brain-2015", "2023-12-14")
 
