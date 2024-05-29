@@ -23,8 +23,8 @@ def save_dataset(x: Any, path, metadata):
     Args:
         x:
             An object containing single-cell data.
-            May be a derivative of 
-            :py:class:`~summarizedexperiment.SummarizedExperiment.SummarizedExperiment` 
+            May be a derivative of
+            :py:class:`~summarizedexperiment.SummarizedExperiment.SummarizedExperiment`
             or :py:class:`~anndata.AnnData`.
 
         path:
@@ -78,7 +78,9 @@ def save_dataset(x: Any, path, metadata):
             # Save the dataset
             scrnaseq.save_dataset(sce, cache_dir, meta)
     """
-    raise NotImplementedError(f"'save_dataset' is not supported for objects of class: {type(x)}")
+    raise NotImplementedError(
+        f"'save_dataset' is not supported for objects of class: {type(x)}"
+    )
 
 
 def _save_se(x, path, metadata):
