@@ -7,6 +7,7 @@ from typing import Any
 import dolomite_base as dl
 from gypsum_client import fetch_metadata_schema, validate_metadata
 from singlecellexperiment import SingleCellExperiment
+from summarizedexperiment import SummarizedExperiment
 
 from .utils import format_object_metadata
 
@@ -22,7 +23,9 @@ def save_dataset(x: Any, path, metadata):
     Args:
         x:
             An object containing single-cell data.
-            May be a derivative of SummarizedExperiment or AnnData.
+            May be a derivative of 
+            :py:class:`~summarizedexperiment.SummarizedExperiment.SummarizedExperiment` 
+            or :py:class:`~anndata.AnnData`.
 
         path:
             Path to a new directory to save the dataset.
@@ -75,18 +78,14 @@ def save_dataset(x: Any, path, metadata):
             # Save the dataset
             scrnaseq.save_dataset(sce, cache_dir, meta)
     """
-    raise NotImplementedError(
-        f"'save_dataset' is not supported for objects of class: {type(x)}"
-    )
+    raise NotImplementedError(f"'save_dataset' is not supported for objects of class: {type(x)}")
 
 
-@save_dataset.register
-def save_dataset_sce(x: SingleCellExperiment, path: str, metadata: dict):
-    """Save :py:class:`~singlecellexperiment.SingleCellExperiment.SingleCellExperiment` to disk."""
+def _save_se(x, path, metadata):
     schema = fetch_metadata_schema()
 
     if "bioconductor_version" not in metadata:
-        metadata["bioconductor_version"] = "3.14"  # current release
+        metadata["bioconductor_version"] = "3.19"  # current release
 
     validate_metadata(metadata, schema)
 
@@ -109,7 +108,17 @@ def save_dataset_sce(x: SingleCellExperiment, path: str, metadata: dict):
     with open(os.path.join(path, "_bioconductor.json"), "w") as f:
         f.write(contents)
 
-    return
+
+@save_dataset.register
+def save_dataset_sce(x: SingleCellExperiment, path: str, metadata: dict):
+    """Save :py:class:`~singlecellexperiment.SingleCellExperiment.SingleCellExperiment` to disk."""
+    return _save_se(x, path, metadata)
+
+
+@save_dataset.register
+def save_dataset_se(x: SummarizedExperiment, path: str, metadata: dict):
+    """Save :py:class:`~summarizedexperiment.SummarizedExperiment.SummarizedExperiment` to disk."""
+    return _save_se(x, path, metadata)
 
 
 has_anndata = False
