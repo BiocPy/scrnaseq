@@ -176,6 +176,14 @@ Want to contribute your own dataset to this package? It's easy! Just follow thes
      )
      ```
 
+     Or if you want to save an `AnnData` object, easily convert that into a `SingleCellExperiment` object:
+
+     ```python
+     from singlecellexperiment import SingleCellExperiment
+
+     sce = SingleCellExperiment.from_anndata(YOUR_ANNDATA_OBJ)
+     ```
+
 2. Assemble the metadata for your dataset. This should be a dictionary as specified in the [Bioconductor metadata schema](https://github.com/ArtifactDB/bioconductor-metadata-index). Check out some examples from `fetch_metadata()`  Note that the `application.takane` property will be automatically added later, and so can be omitted from the list that you create.
 
      ```python
