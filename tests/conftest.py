@@ -7,3 +7,7 @@ Read more about conftest.py under:
 """
 
 # import pytest
+
+from gypsum_client.config import REQUESTS_MOD
+
+REQUESTS_MOD["verify"] = False
