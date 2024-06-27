@@ -120,31 +120,31 @@ def test_polish_dataset_attempts_integer_conversions():
     sce = SingleCellExperiment(assays={"counts": mat})
 
     y = polish_dataset(sce)
-    assert y.assays["counts"].dtype == np.int_
+    assert np.issubdtype(y.assays["counts"].dtype, np.integer)
 
     mat = np.random.poisson(0.1, (100, 10)).astype(float)
     sce = SingleCellExperiment(assays={"counts": sparse.csr_matrix(mat)})
 
     y = polish_dataset(sce)
     assert sparse.issparse(y.assays["counts"])
-    assert y.assays["counts"].dtype == np.int_
+    assert np.issubdtype(y.assays["counts"].dtype, np.integer)
 
     mat = np.random.poisson(3, (100, 10)) * 1.5
     sce = SingleCellExperiment(assays={"counts": mat})
 
     y = polish_dataset(sce)
-    assert y.assays["counts"].dtype == np.float_
+    assert np.issubdtype(y.assays["counts"].dtype, np.floating)
 
 
 def test_polish_dataset_works_with_na_values():
     mat = np.random.poisson(0.1, (100, 10))
-    mat = mat.astype(np.float_)
+    mat = mat.astype(np.float64)
     mat.ravel()[np.random.choice(mat.size, 10, replace=False)] = np.nan
     sce = SingleCellExperiment(assays={"counts": sparse.csr_matrix(mat)})
 
     y = polish_dataset(sce)
     assert sparse.issparse(y.assays["counts"])
-    assert y.assays["counts"].dtype == np.float_
+    assert np.issubdtype(y.assays["counts"].dtype, np.floating)
 
 
 def test_polish_dataset_forbids_highly_nested_altexps():
