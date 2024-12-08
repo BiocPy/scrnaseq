@@ -83,12 +83,8 @@ def fetch_dataset(
         or one of its subclasses.
     """
 
-    version_path = save_version(
-        package, name, version, cache_dir=cache_dir, overwrite=overwrite
-    )
-    obj_path = (
-        version_path if path is None else os.path.join(version_path, path.rstrip("/"))
-    )
+    version_path = save_version(package, name, version, cache_dir=cache_dir, overwrite=overwrite)
+    obj_path = version_path if path is None else os.path.join(version_path, path.rstrip("/"))
 
     old = alt_read_object_function(single_cell_load_object)
 
@@ -150,9 +146,7 @@ def fetch_metadata(
         Dictionary containing metadata for the specified dataset.
     """
     remote_path = "_bioconductor.json" if path is None else f"{path}/_bioconductor.json"
-    local_path = save_file(
-        package, name, version, remote_path, cache_dir=cache_dir, overwrite=overwrite
-    )
+    local_path = save_file(package, name, version, remote_path, cache_dir=cache_dir, overwrite=overwrite)
 
     with open(local_path, "r") as f:
         metadata = json.load(f)
