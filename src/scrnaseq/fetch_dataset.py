@@ -41,7 +41,10 @@ def fetch_dataset(
 
         .. code-block:: python
 
-            sce = fetch_dataset("zeisel-brain-2015", "2023-12-14")
+            sce = fetch_dataset(
+                "zeisel-brain-2015",
+                "2023-12-14",
+            )
 
     Args:
         name:
@@ -118,7 +121,10 @@ def fetch_metadata(
 
     .. code-block:: python
 
-        meta = fetch_metadata("zeisel-brain-2015", "2023-12-14")
+        meta = fetch_metadata(
+            "zeisel-brain-2015",
+            "2023-12-14",
+        )
 
     Args:
         name:
