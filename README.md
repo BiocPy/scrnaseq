@@ -10,7 +10,6 @@
 [![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Twitter)](https://twitter.com/scrnaseq)
 -->
 
-[![Project generated with PyScaffold](https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold)](https://pyscaffold.org/)
 [![PyPI-Server](https://img.shields.io/pypi/v/scrnaseq.svg)](https://pypi.org/project/scrnaseq/)
 
 # scrnaseq
