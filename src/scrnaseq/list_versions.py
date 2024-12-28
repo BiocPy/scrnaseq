@@ -14,7 +14,9 @@ def list_versions(name: str) -> List[str]:
 
         .. code-block:: python
 
-            versions = list_versions("romanov-brain-2017")
+            versions = list_versions(
+                "romanov-brain-2017"
+            )
 
     Args:
         name:
@@ -33,7 +35,9 @@ def fetch_latest_version(name: str) -> str:
 
         .. code-block:: python
 
-            version = fetch_latest_version("romanov-brain-2017")
+            version = fetch_latest_version(
+                "romanov-brain-2017"
+            )
 
     Args:
         name:

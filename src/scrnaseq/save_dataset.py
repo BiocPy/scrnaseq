@@ -54,15 +54,27 @@ def save_dataset(x: Any, path, metadata):
             # Fetch an existing dataset
             # or create your own ``SingleCellExperiment``
             # or ``AnnData`` object.
-            sce = scrnaseq.fetch_dataset("zeisel-brain-2015", "2023-12-14")
+            sce = scrnaseq.fetch_dataset(
+                "zeisel-brain-2015",
+                "2023-12-14",
+            )
 
             # Provide dataset level metadata for search and findability
             meta = {
                 "title": "My dataset made from ziesel brain",
                 "description": "This is a copy of the ziesel",
-                "taxonomy_id": ["10090"], # NCBI ID
-                "genome": ["GRCh38"], # genome build
-                "sources": [{"provider": "GEO", "id": "GSE12345"}],
+                "taxonomy_id": [
+                    "10090"
+                ],  # NCBI ID
+                "genome": [
+                    "GRCh38"
+                ],  # genome build
+                "sources": [
+                    {
+                        "provider": "GEO",
+                        "id": "GSE12345",
+                    }
+                ],
                 "maintainer_name": "Shizuka Mogami",
                 "maintainer_email": "mogami.shizuka@765pro.com",
             }
@@ -73,14 +85,18 @@ def save_dataset(x: Any, path, metadata):
             cache_dir = tempfile.mkdtemp()
 
             # Make sure the directory is clean
-            shutil.rmtree(cache_dir)
+            shutil.rmtree(
+                cache_dir
+            )
 
             # Save the dataset
-            scrnaseq.save_dataset(sce, cache_dir, meta)
+            scrnaseq.save_dataset(
+                sce,
+                cache_dir,
+                meta,
+            )
     """
-    raise NotImplementedError(
-        f"'save_dataset' is not supported for objects of class: {type(x)}"
-    )
+    raise NotImplementedError(f"'save_dataset' is not supported for objects of class: {type(x)}")
 
 
 def _save_se(x, path, metadata):

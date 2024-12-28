@@ -14,16 +14,16 @@ __license__ = "MIT"
 
 
 @lru_cache
-def list_datasets(
-    cache_dir: str = cache_directory(), overwrite: bool = False, latest: bool = True
-) -> pd.DataFrame:
+def list_datasets(cache_dir: str = cache_directory(), overwrite: bool = False, latest: bool = True) -> pd.DataFrame:
     """List all available datasets.
 
     Example:
 
         .. code-block:: python
 
-            datasets = list_datasets()
+            datasets = (
+                list_datasets()
+            )
 
     Args:
         cache_dir:
@@ -83,9 +83,7 @@ def _format_query_results(results: list, key_names: list):
 
 
 def _sanitize_query_to_output(results: list, latest: bool, meta_name: str = "meta"):
-    _all_paths = [
-        None if "/" not in p else p.rsplit("/", 1)[0] for p in results["path"]
-    ]
+    _all_paths = [None if "/" not in p else p.rsplit("/", 1)[0] for p in results["path"]]
 
     df = pd.DataFrame(
         {
@@ -105,33 +103,22 @@ def _sanitize_query_to_output(results: list, latest: bool, meta_name: str = "met
     )
     df["title"] = _extract_atomic_from_json(_all_metas, lambda x: x.get("title"))
     df["description"] = _extract_atomic_from_json(_all_metas, lambda x: x.get("title"))
-    df["taxonomy_id"] = _extract_charlist_from_json(
-        _all_metas, lambda x: x.get("taxonomy_id")
-    )
+    df["taxonomy_id"] = _extract_charlist_from_json(_all_metas, lambda x: x.get("taxonomy_id"))
     df["genome"] = _extract_charlist_from_json(_all_metas, lambda x: x.get("genome"))
 
     df["rows"] = _extract_atomic_from_json(
         _all_metas,
-        lambda x: x.get("applications", {})
-        .get("takane", {})
-        .get("summarized_experiment", {})
-        .get("rows"),
+        lambda x: x.get("applications", {}).get("takane", {}).get("summarized_experiment", {}).get("rows"),
     )
 
     df["columns"] = _extract_atomic_from_json(
         _all_metas,
-        lambda x: x.get("applications", {})
-        .get("takane", {})
-        .get("summarized_experiment", {})
-        .get("columns"),
+        lambda x: x.get("applications", {}).get("takane", {}).get("summarized_experiment", {}).get("columns"),
     )
 
     df["assays"] = _extract_charlist_from_json(
         _all_metas,
-        lambda x: x.get("applications", {})
-        .get("takane", {})
-        .get("summarized_experiment", {})
-        .get("assays"),
+        lambda x: x.get("applications", {}).get("takane", {}).get("summarized_experiment", {}).get("assays"),
     )
     df["column_annotations"] = _extract_charlist_from_json(
         _all_metas,
@@ -155,15 +142,9 @@ def _sanitize_query_to_output(results: list, latest: bool, meta_name: str = "met
         .get("alternative_experiments"),
     )
 
-    df["bioconductor_version"] = _extract_atomic_from_json(
-        _all_metas, lambda x: x.get("bioconductor_version")
-    )
-    df["maintainer_name"] = _extract_atomic_from_json(
-        _all_metas, lambda x: x.get("maintainer_name")
-    )
-    df["maintainer_email"] = _extract_atomic_from_json(
-        _all_metas, lambda x: x.get("maintainer_email")
-    )
+    df["bioconductor_version"] = _extract_atomic_from_json(_all_metas, lambda x: x.get("bioconductor_version"))
+    df["maintainer_name"] = _extract_atomic_from_json(_all_metas, lambda x: x.get("maintainer_name"))
+    df["maintainer_email"] = _extract_atomic_from_json(_all_metas, lambda x: x.get("maintainer_email"))
 
     sources = []
     for meta in _all_metas:
@@ -186,9 +167,7 @@ def _sanitize_query_to_output(results: list, latest: bool, meta_name: str = "met
 
 
 def _extract_atomic_from_json(metadata, extract):
-    return [
-        extract(_meta) if extract(_meta) is not None else None for _meta in metadata
-    ]
+    return [extract(_meta) if extract(_meta) is not None else None for _meta in metadata]
 
 
 def _extract_charlist_from_json(metadata, extract):
