@@ -21,7 +21,9 @@ def list_datasets(cache_dir: str = cache_directory(), overwrite: bool = False, l
 
         .. code-block:: python
 
-            datasets = list_datasets()
+            datasets = (
+                list_datasets()
+            )
 
     Args:
         cache_dir:
