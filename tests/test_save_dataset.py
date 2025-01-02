@@ -6,7 +6,6 @@ import tempfile
 import anndata as ad
 import dolomite_base as dl
 import numpy as np
-import pandas as pd
 import pytest
 from dolomite_matrix import ReloadedArray
 from scrnaseq import fetch_dataset, save_dataset

@@ -1,4 +1,4 @@
-import pandas as pd
+from biocframe import BiocFrame
 from gypsum_client import define_text_query
 from scrnaseq import search_datasets
 
@@ -10,14 +10,14 @@ __license__ = "MIT"
 def test_search_datasets():
     res = search_datasets("brain")
     assert len(res) > 10
-    assert isinstance(res, pd.DataFrame)
+    assert isinstance(res, BiocFrame)
 
     res = search_datasets(define_text_query("Neuro%", partial=True))
-    assert isinstance(res, pd.DataFrame)
+    assert isinstance(res, BiocFrame)
     assert len(res) > 0
 
     res = search_datasets(define_text_query("10090", field="taxonomy_id"))
-    assert isinstance(res, pd.DataFrame)
+    assert isinstance(res, BiocFrame)
     assert len(res) > 0
 
     res = search_datasets(
@@ -27,5 +27,5 @@ def test_search_datasets():
             | define_text_query("pancrea%", partial=True)
         )
     )
-    assert isinstance(res, pd.DataFrame)
+    assert isinstance(res, BiocFrame)
     assert len(res) > 0
