@@ -45,7 +45,7 @@ print(datasets[["name", "version"]].head(3))
 # |  2 | zhong-prefrontal-2018 | 2023-12-22 |
 ```
 
-This returns a pandas `DataFrame` to easily filter and download datasets of interest.
+This returns a `BiocFrame` to easily filter and download datasets of interest.
 
 Users can also search on the metadata text using the `search_datasets()` function. This accepts both simple text queries as well as more complicated expressions involving boolean operations.
 

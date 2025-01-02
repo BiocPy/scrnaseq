@@ -7,7 +7,7 @@ import anndata as ad
 import dolomite_base as dl
 import dolomite_matrix as dlm
 import numpy as np
-import pandas as pd
+import datetime
 import pytest
 from biocframe import BiocFrame
 from gypsum_client import prepare_directory_upload
@@ -139,7 +139,7 @@ def test_actual_upload_works_correctly():
 
     app_url = "https://gypsum.artifactdb.com"
 
-    version = str(pd.Timestamp.today().date())
+    version = str(datetime.datatime.now().date())
     upload_dataset(tmp, "test", version, probation=True, url=app_url, token=gh_token)
     fetch_dataset.cache_clear()  # Clear cache before fetching
 
