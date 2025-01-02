@@ -1,7 +1,6 @@
 from typing import Type
 
 import numpy as np
-from scipy import sparse as sp
 from singlecellexperiment import SingleCellExperiment
 from summarizedexperiment import SummarizedExperiment
 
@@ -80,6 +79,7 @@ def _polish_dataset(
     for asyname, asy in x.assays.items():
         if reformat_assay_by_density is not None:
             density = min(np.mean(asy != 0), np.mean(asy != np.nan))
+            from scipy import sparse as sp
             if density < reformat_assay_by_density:
                 if not sp.issparse(asy):
                     asy = sp.csr_matrix(asy)
@@ -90,6 +90,8 @@ def _polish_dataset(
         if attempt_integer_conversion:
             if np.issubdtype(asy.dtype, np.floating):
                 _cast = False
+                from scipy import sparse as sp
+
                 if sp.issparse(asy):
                     if not np.any(asy.data % 1 != 0):
                         _cast = True
