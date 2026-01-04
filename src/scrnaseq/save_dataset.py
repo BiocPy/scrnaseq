@@ -5,6 +5,7 @@ from functools import singledispatch
 from typing import Any
 
 import dolomite_base as dl
+import dolomite_ranges
 from gypsum_client import fetch_metadata_schema, validate_metadata
 from singlecellexperiment import SingleCellExperiment
 from summarizedexperiment import SummarizedExperiment
