@@ -5,6 +5,7 @@ import tempfile
 
 import anndata as ad
 import dolomite_base as dl
+import dolomite_ranges
 import numpy as np
 import pytest
 from dolomite_matrix import ReloadedArray
