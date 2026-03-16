@@ -122,24 +122,21 @@ def _sanitize_query_to_output(results: list, latest: bool, meta_name: str = "met
     )
     df["column_annotations"] = _extract_charlist_from_json(
         _all_metas,
-        lambda x: x.get("applications", {})
-        .get("takane", {})
-        .get("summarized_experiment", {})
-        .get("column_annotations"),
+        lambda x: (
+            x.get("applications", {}).get("takane", {}).get("summarized_experiment", {}).get("column_annotations")
+        ),
     )
     df["reduced_dimensions"] = _extract_charlist_from_json(
         _all_metas,
-        lambda x: x.get("applications", {})
-        .get("takane", {})
-        .get("single_cell_experiment", {})
-        .get("reduced_dimensions"),
+        lambda x: (
+            x.get("applications", {}).get("takane", {}).get("single_cell_experiment", {}).get("reduced_dimensions")
+        ),
     )
     df["alternative_experiments"] = _extract_charlist_from_json(
         _all_metas,
-        lambda x: x.get("applications", {})
-        .get("takane", {})
-        .get("single_cell_experiment", {})
-        .get("alternative_experiments"),
+        lambda x: (
+            x.get("applications", {}).get("takane", {}).get("single_cell_experiment", {}).get("alternative_experiments")
+        ),
     )
 
     df["bioconductor_version"] = _extract_atomic_from_json(_all_metas, lambda x: x.get("bioconductor_version"))
