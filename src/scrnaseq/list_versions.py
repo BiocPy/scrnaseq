@@ -1,5 +1,3 @@
-from typing import List
-
 import gypsum_client as gypc
 
 __author__ = "Jayaram Kancherla"
@@ -7,7 +5,7 @@ __copyright__ = "Jayaram Kancherla"
 __license__ = "MIT"
 
 
-def list_versions(name: str) -> List[str]:
+def list_versions(name: str) -> list[str]:
     """List all available versions for a dataset.
 
     Example:
