@@ -1,6 +1,5 @@
 import sqlite3
 from functools import lru_cache
-from typing import Union
 
 from biocframe import BiocFrame
 from gypsum_client import cache_directory, fetch_metadata_database
@@ -18,7 +17,7 @@ __license__ = "MIT"
 
 @lru_cache
 def search_datasets(
-    query: Union[str, GypsumSearchClause],
+    query: str | GypsumSearchClause,
     cache_dir: str = cache_directory(),
     overwrite: bool = False,
     latest: bool = True,

@@ -34,6 +34,7 @@ The `list_datasets()` function will display all available datasets along with th
 
 ```python
 import scrnaseq
+
 datasets = scrnaseq.list_datasets()
 print(datasets[["name", "version"]].head(3))
 
@@ -57,11 +58,8 @@ res = scrnaseq.search_datasets("pancreas")
 from gypsum_client import define_text_query
 
 res = scrnaseq.search_datasets(
-     define_text_query("GRCm38", field="genome")
-     & (
-          define_text_query("neuro%", partial=True)
-          | define_text_query("pancrea%", partial=True)
-     )
+    define_text_query("GRCm38", field="genome")
+    & (define_text_query("neuro%", partial=True) | define_text_query("pancrea%", partial=True))
 )
 print(res[["name", "version"]].head(3))
 
@@ -169,9 +167,9 @@ Want to contribute your own dataset to this package? It's easy! Just follow thes
      row_names = [f"GENE_{i}" for i in range(mat.shape[0])]
      col_names = list("ABCDEFGHIJ")
      sce = SingleCellExperiment(
-          assays={"counts": mat},
-          row_data=BiocFrame(row_names=row_names),
-          column_data=BiocFrame(row_names=col_names),
+         assays={"counts": mat},
+         row_data=BiocFrame(row_names=row_names),
+         column_data=BiocFrame(row_names=col_names),
      )
      ```
 
@@ -187,13 +185,13 @@ Want to contribute your own dataset to this package? It's easy! Just follow thes
 
      ```python
      meta = {
-          "title": "My dataset forked from ziesel brain",
-          "description": "This is a copy of the ziesel",
-          "taxonomy_id": ["10090"],  # NCBI ID
-          "genome": ["GRCh38"],  # genome build
-          "sources": [{"provider": "GEO", "id": "GSE12345"}],
-          "maintainer_name": "Shizuka Mogami",
-          "maintainer_email": "mogami.shizuka@765pro.com",
+         "title": "My dataset forked from ziesel brain",
+         "description": "This is a copy of the ziesel",
+         "taxonomy_id": ["10090"],  # NCBI ID
+         "genome": ["GRCh38"],  # genome build
+         "sources": [{"provider": "GEO", "id": "GSE12345"}],
+         "maintainer_name": "Shizuka Mogami",
+         "maintainer_email": "mogami.shizuka@765pro.com",
      }
      ```
 
