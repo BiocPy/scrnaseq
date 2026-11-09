@@ -1,5 +1,3 @@
-from typing import Type
-
 import numpy as np
 from singlecellexperiment import SingleCellExperiment
 from summarizedexperiment import SummarizedExperiment
@@ -10,12 +8,12 @@ __license__ = "MIT"
 
 
 def polish_dataset(
-    x: Type[SummarizedExperiment],
+    x: type[SummarizedExperiment],
     reformat_assay_by_density: float = 0.3,
     attempt_integer_conversion: bool = True,
     remove_altexp_coldata: bool = True,
     forbid_nested_altexp: bool = True,
-) -> Type[SummarizedExperiment]:
+) -> type[SummarizedExperiment]:
     """Optimize dataset for saving.
 
     Prepare a
@@ -68,7 +66,7 @@ def polish_dataset(
 
 
 def _polish_dataset(
-    x: Type[SummarizedExperiment],
+    x: type[SummarizedExperiment],
     reformat_assay_by_density: float,
     attempt_integer_conversion: bool,
     remove_altexp_coldata: bool,
